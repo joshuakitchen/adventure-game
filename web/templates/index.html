@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% if userdata %}
+  <meta name="user" content="{{userdata}}" />
+  {% endif %}
+  <title>Text-Based Adventure Game</title>
+  <link href="/static/main.css" rel="stylesheet" type="text/css" />
+</head>
+<body class="bg-zinc-900">
+  <div id="react-root"></div>
+  <script src="/static/main.js"></script>
+</body>
+</html>
