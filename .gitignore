@@ -300,3 +300,6 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+api/saves/
+api/data/adventure.db

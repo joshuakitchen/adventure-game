@@ -1,5 +1,6 @@
 from bcrypt import checkpw
-from config import get_conn
+
+from .config import get_conn
 
 def get_user(email):
   conn = get_conn()

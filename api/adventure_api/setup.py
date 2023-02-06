@@ -1,6 +1,7 @@
 from bcrypt import hashpw, gensalt
 from uuid import uuid4
-from config import get_conn
+
+from .config import get_conn
 
 def create_character_table():
   conn = get_conn()

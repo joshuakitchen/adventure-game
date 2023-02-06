@@ -1,7 +1,7 @@
-from docstring_parser import parse
-from adventure import Adventure, Character, CHARACTERISTIC_LIST, CHARACTERISTIC_TO_PY, TYPES_LIST
-from command_base import CommandHandlerBase, requires_state
 from typing import List, Optional, TypeVar
+
+from .adventure import Adventure, CHARACTERISTIC_LIST, CHARACTERISTIC_TO_PY, TYPES_LIST
+from .command_base import CommandHandlerBase, requires_state
 
 T = TypeVar('T', bound='CommandHandler')
 class CommandHandler(CommandHandlerBase):
@@ -57,3 +57,16 @@ class CommandHandler(CommandHandlerBase):
     """
     self._adventure._state = 'adventure'
     self._adventure.save()
+  
+  @requires_state('adventure')
+  async def command_survey(self: T):
+    """
+    
+    :command_description: Surveys the immediate area, generating a map of the local cell and surrounding cells."""
+    MAP = '''Local:      Global:
+.........   \033[33m♣\033[0m\033[33m♣\033[0m\033[33m♣\033[0m\033[33m♣\033[0m\033[33m♣\033[0m
+.........   \033[33m♣\033[0m\033[33m♣\033[0m\033[33m♣\033[0m\033[33m♣\033[0m\033[33m♣\033[0m
+.........   \033[33m♣\033[0m\033[33m♣\033[0m@\033[33m♣\033[0m\033[33m♣\033[0m
+..@......   ♣♣♣♣♣
+.........   ♣♣♣♣♣\n'''
+    await self.send_message(MAP)

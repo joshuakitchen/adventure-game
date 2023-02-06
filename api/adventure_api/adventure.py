@@ -1,7 +1,7 @@
 import json
 from fastapi import WebSocket
-from discovery import Discovery
-from world import World
+from .discovery import Discovery
+from .world import World
 
 INTRODUCTION_TEXT = '''Welcome to the world of Alvara
 
@@ -93,12 +93,12 @@ class Adventure:
     await self._ws.send_text(message.format(*args, **kwargs))
   
   def save(self):
-    with open(f'saves/{self._user_id}.json', 'w') as f:
+    with open(f'./data/saves/{self._user_id}.json', 'w') as f:
       f.write(json.dumps(dict(state=self._state,x=self._x,z=self._z,character=self._character.to_json())))
 
   def load(self):
     try:
-      with open(f'saves/{self._user_id}.json', 'r') as f:
+      with open(f'./data/saves/{self._user_id}.json', 'r') as f:
         data = json.loads(f.read())
         self._state = data['state']
         self._x = data['x']

@@ -1,9 +1,8 @@
 import inspect
 import re
 import itertools
-from docstring_parser import parse
-from adventure import Adventure
-from typing import Callable, List, Optional, TypeVar, Type
+from typing import Callable, TypeVar
+from .adventure import Adventure
 
 class InvalidCommandArgument(Exception):
   pass
