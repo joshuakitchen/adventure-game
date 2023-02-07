@@ -14,8 +14,7 @@ def create_character_table():
 def create_user_table():
   conn = get_conn()
   try:
-    conn.execute('CREATE TABLE IF NOT EXISTS users (id VARCHAR(36) NOT NULL, email VARCHAR(255) NOT NULL, password TEXT NOT NULL)')
-    conn.execute('INSERT INTO users VALUES (?, ?, ?)', [str(uuid4()), 'joshua.kitchen95@gmail.com', hashpw(b'admin', gensalt()).decode('utf-8')])
+    conn.execute('CREATE TABLE IF NOT EXISTS users (id VARCHAR(36) NOT NULL, email VARCHAR(255) NOT NULL UNIQUE, password TEXT NOT NULL)')
     conn.commit()
   finally:
     conn.close()

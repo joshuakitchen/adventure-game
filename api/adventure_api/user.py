@@ -1,4 +1,6 @@
-from bcrypt import checkpw
+from bcrypt import checkpw, hashpw, gensalt
+from fastapi import HTTPException
+from uuid import uuid4
 
 from .config import get_conn
 
@@ -15,4 +17,16 @@ def get_user(email):
     conn.close()
 
 def check_password(expected, actual):
-  return checkpw(bytes(expected, 'utf-8'), bytes(actual, 'utf-8'))
+  if not isinstance(expected, bytes):
+    expected = bytes(expected, 'utf-8')
+  if not isinstance(actual, bytes):
+    actual = bytes(actual, 'utf-8')
+  return checkpw(expected, actual)
+
+def register_user(email: str, password: str):
+  conn = get_conn()
+  try:
+    conn.execute('INSERT INTO users VALUES (?, ?, ?)', [str(uuid4()), email, hashpw(password.encode('utf-8'), gensalt()).decode('utf-8')])
+    conn.commit()
+  finally:
+    conn.close()

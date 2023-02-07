@@ -1,13 +1,15 @@
 import logging
 import jwt
 import json
+import re
 from fastapi import Depends, FastAPI, HTTPException, WebSocket, Header, WebSocketDisconnect
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.security.utils import get_authorization_scheme_param
+from pydantic import BaseModel
 from .adventure import Adventure
 from .command import CommandHandler
 from .setup import setup_database
-from .user import check_password, get_user
+from .user import check_password, get_user, register_user
 
 CLIENT_ID = '4752871f-71c5-4940-8c1e-bee3be614c63'
 CLIENT_SECRET = '0f2321742fc62e3390e9b1d2161be5665652a1c9e1bb781f012edf8a3f1176721e257a4866703cce'
@@ -16,12 +18,32 @@ app = FastAPI()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
 
+email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
+
+class RegisterRequest(BaseModel):
+  email: str
+  password: str
+
 async def get_current_user(token: str = Depends(oauth2_scheme)):
   try:
     decoded_token = jwt.decode(token, CLIENT_SECRET, algorithms=['HS256'])
   except jwt.InvalidSignatureError:
     raise HTTPException(status_code=400, detail='Invalid token')
   return {'id': decoded_token['user_id'], 'email': decoded_token['email']}
+
+@app.post('/register')
+async def register(req: RegisterRequest):
+  if not re.fullmatch(email_regex, req.email):
+    raise HTTPException(400, 'Email is not a valid email address.')
+  if len(req.password) < 8:
+    raise HTTPException(400, 'Password must be above 8 characters.')
+  u = get_user(req.email)
+  if u:
+    raise HTTPException(403, 'That email is already taken')
+  register_user(req.email, req.password)
+  return {
+    'success': True
+  }
 
 @app.post('/token')
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
