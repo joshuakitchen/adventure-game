@@ -88,8 +88,8 @@ class Character:
         data: Dict[str, Any] = json.loads(raw_data)
         self._state = data.get('state', 'intro')
         self._name = data.get('name', None)
-        self._x = data.get('x', None)
-        self._z = data.get('z', None)
+        self._x = data.get('x', 0)
+        self._z = data.get('z', 0)
 
     def load_character(self):
         """Loads the character using the current database driver."""
