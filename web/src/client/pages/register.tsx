@@ -3,8 +3,12 @@ import { useNavigate } from 'react-router'
 import axios from 'axios'
 import { useUser } from '../user'
 
-const LoginPage = function LoginPage() {
-  const [state, setState] = useState({ username: '', password: '' })
+const RegisterPage = function RegisterPage() {
+  const [state, setState] = useState({
+    username: '',
+    password: '',
+    confirmPassword: '',
+  })
   const [user, setUser] = useUser()
   const navigate = useNavigate()
   useEffect(() => {
@@ -15,7 +19,7 @@ const LoginPage = function LoginPage() {
   return (
     <div className='mx-auto mt-4 w-[480px] flex flex-col'>
       <div className='p-4 text-gray-200 text-center border-b border-zinc-800 font-mono'>
-        Welcome to the World of Alvara
+        Register to become a Citizen
       </div>
       <div className='p-4 flex flex-col gap-3 text-gray-200'>
         <input
@@ -39,27 +43,45 @@ const LoginPage = function LoginPage() {
           name='password'
           autoComplete='password'
         />
+        <input
+          value={state.confirmPassword}
+          onChange={(e) =>
+            setState((state) => ({ ...state, confirmPassword: e.target.value }))
+          }
+          className='p-4 bg-zinc-800 outline-none font-mono'
+          placeholder='Confirm Password'
+          type='password'
+          name='confirm-password'
+        />
         <div className='flex gap-3'>
           <button
             className='w-full py-2 bg-zinc-800 hover:bg-zinc-700 ease-in-out transition-all font-mono'
             onClick={() => {
+              navigate('/login')
+            }}
+          >
+            Back to Login
+          </button>
+          <button
+            disabled={
+              !state.username ||
+              !state.password ||
+              !state.confirmPassword ||
+              state.password !== state.confirmPassword
+            }
+            className='w-full py-2 bg-zinc-800 hover:bg-zinc-700 ease-in-out transition-all font-mono disabled:hover:cursor-not-allowed disabled:bg-zinc-900'
+            onClick={() => {
               axios
-                .post('/login', state)
+                .post('/register', {
+                  email: state.username,
+                  password: state.password,
+                })
                 .then((res) => {
-                  setUser(res.data)
-                  navigate('/')
+                  navigate('/login')
                 })
                 .catch((err) => {
                   console.log(err)
                 })
-            }}
-          >
-            Login
-          </button>
-          <button
-            className='w-full py-2 bg-zinc-800 hover:bg-zinc-700 ease-in-out transition-all font-mono'
-            onClick={() => {
-              navigate('/register')
             }}
           >
             Register
@@ -70,4 +92,4 @@ const LoginPage = function LoginPage() {
   )
 }
 
-export default LoginPage
+export default RegisterPage

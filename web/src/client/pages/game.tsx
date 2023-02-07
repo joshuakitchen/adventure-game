@@ -6,9 +6,11 @@ import {
 } from '@fortawesome/react-fontawesome'
 import { Terminal } from '@components'
 import { useUser } from '../user'
+import axios from 'axios'
 import WebSocketConnector, { useWebSocket } from '../websocket'
 
 const GamePageInner = function GamePageInner() {
+  const [user, setUser] = useUser()
   const [{ gameAutocomplete, gameText }, setState] = useState({
     gameText: '',
     gameAutocomplete: '',
@@ -43,6 +45,21 @@ const GamePageInner = function GamePageInner() {
         </a>
         <a className='p-4 transition-colors hover:bg-zinc-700' href='#'>
           <FontAwesomeIcon icon='bug' fixedWidth />
+        </a>
+        <a
+          className='p-4 transition-colors hover:bg-zinc-700 hover:cursor-pointer'
+          onClick={(e) => {
+            axios
+              .post('/logout')
+              .then(() => {
+                setUser(null)
+              })
+              .catch((e) => {
+                setUser(null)
+              })
+          }}
+        >
+          <FontAwesomeIcon icon='sign-out' fixedWidth />
         </a>
         <a className='mt-auto p-4 transition-colors hover:bg-zinc-700' href='#'>
           <FontAwesomeIcon icon='cog' fixedWidth />
@@ -90,7 +107,7 @@ const GamePage = function GamePage() {
     if (!user) {
       navigate('/login')
     }
-  }, [])
+  }, [user])
   if (!user) {
     return <div />
   }

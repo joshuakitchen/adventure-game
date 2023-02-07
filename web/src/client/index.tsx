@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { far } from '@fortawesome/free-regular-svg-icons'
 import { fas } from '@fortawesome/free-solid-svg-icons'
-import { GamePage, LoginPage } from './pages'
+import { GamePage, LoginPage, RegisterPage } from './pages'
 import { UserProvider } from './user'
 
 library.add(far, fas)
@@ -17,6 +17,7 @@ const Application: FC<{}> = function Application() {
     <Routes>
       <Route path='/' element={<GamePage />} />
       <Route path='/login' element={<LoginPage />} />
+      <Route path='/register' element={<RegisterPage />} />
     </Routes>
   )
 }
