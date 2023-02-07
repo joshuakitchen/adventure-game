@@ -97,5 +97,9 @@ app.get('/*', function _onGet(req, res) {
 })
 
 app.listen(8080, function _onListen() {
-  console.log(`application has started on [${this.address().port}]`)
+  console.log(
+    `application has started on [${
+      this.address().port
+    }] connected to [${API_URI}]`
+  )
 })
