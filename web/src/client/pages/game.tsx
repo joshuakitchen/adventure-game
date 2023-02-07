@@ -91,8 +91,15 @@ const GamePage = function GamePage() {
       navigate('/login')
     }
   }, [])
+  if (!user) {
+    return <div />
+  }
   return (
-    <WebSocketConnector url={`ws://${document.location.host}/play`}>
+    <WebSocketConnector
+      url={`${document.location.protocol === 'https:' ? 'wss' : 'ws'}://${
+        document.location.host
+      }/play`}
+    >
       <GamePageInner />
     </WebSocketConnector>
   )
