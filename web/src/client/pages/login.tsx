@@ -15,7 +15,7 @@ const LoginPage = function LoginPage() {
   return (
     <div className='mx-auto mt-4 w-[480px] flex flex-col'>
       <div className='p-4 text-gray-200 text-center border-b border-zinc-800 font-mono'>
-        Welcome to the World of Alvara
+        Welcome to Nymirith
       </div>
       <div className='p-4 flex flex-col gap-3 text-gray-200'>
         <input
