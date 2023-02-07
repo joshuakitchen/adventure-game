@@ -8,6 +8,7 @@ const RegisterPage = function RegisterPage() {
     username: '',
     password: '',
     confirmPassword: '',
+    error: null,
   })
   const [user, setUser] = useUser()
   const navigate = useNavigate()
@@ -16,11 +17,17 @@ const RegisterPage = function RegisterPage() {
       navigate('/')
     }
   }, [])
+  const errorPane = !state.error ? null : (
+    <div className='px-4 pt-4 font-mono'>
+      <div className='p-4 text-gray-200 bg-red-800'>{state.error}</div>
+    </div>
+  )
   return (
     <div className='mx-auto mt-4 w-[480px] flex flex-col'>
       <div className='p-4 text-gray-200 text-center border-b border-zinc-800 font-mono'>
         Register to become a Citizen
       </div>
+      {errorPane}
       <div className='p-4 flex flex-col gap-3 text-gray-200'>
         <input
           value={state.username}
@@ -80,7 +87,13 @@ const RegisterPage = function RegisterPage() {
                   navigate('/login')
                 })
                 .catch((err) => {
-                  console.log(err)
+                  const { response } = err
+                  if (response) {
+                    setState((state) => ({
+                      ...state,
+                      error: response.data.detail,
+                    }))
+                  }
                 })
             }}
           >

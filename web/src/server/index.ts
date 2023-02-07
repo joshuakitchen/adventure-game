@@ -59,12 +59,9 @@ app.post('/login', bodyParser.json(), function _onLogin(req, res, next) {
 
 app.post('/register', bodyParser.json(), function _onRegister(req, res, next) {
   axios
-    .post(
-      `${API_URI}/register`,
-      qs.stringify({
-        ...req.body,
-      })
-    )
+    .post(`${API_URI}/register`, {
+      ...req.body,
+    })
     .then(() => {
       res.json({
         success: true,
