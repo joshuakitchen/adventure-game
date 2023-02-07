@@ -21,7 +21,8 @@ def get_conn() -> Any:
             database=os.environ.get('DB_DATABASE'),
             user=os.environ.get('DB_USER'),
             password=os.environ.get('DB_PASSWORD'),
-            port=os.environ.get('DB_PORT', 5432)))
+            port=os.environ.get('DB_PORT', 5432),
+            sslmode=os.environ.get('DB_SSLMODE', None)))
         setattr(get_conn, 'connection', conn)
         return conn
     else:
