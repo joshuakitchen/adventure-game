@@ -9,5 +9,14 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "editor.tabSize": 2
     },
-    "python.linting.mypyEnabled": true
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "ms-python.python",
+        "editor.tabSize": 4
+    },
+    "python.linting.mypyEnabled": true,
+    "python.formatting.provider": "autopep8",
+    "python.formatting.autopep8Path": "autopep8",
+    "python.formatting.autopep8Args": ["--max-line-length", "80", "--experimental", "-a"],
+    "python.analysis.typeCheckingMode": "basic"
 }

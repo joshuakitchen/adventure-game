@@ -4,7 +4,11 @@ import axios from 'axios'
 import { useUser } from '../user'
 
 const LoginPage = function LoginPage() {
-  const [state, setState] = useState({ username: '', password: '' })
+  const [state, setState] = useState({
+    username: '',
+    password: '',
+    error: null,
+  })
   const [user, setUser] = useUser()
   const navigate = useNavigate()
   useEffect(() => {
@@ -12,11 +16,17 @@ const LoginPage = function LoginPage() {
       navigate('/')
     }
   }, [])
+  const errorPane = !state.error ? null : (
+    <div className='px-4 pt-4 font-mono'>
+      <div className='p-4 text-gray-200 bg-red-800'>{state.error}</div>
+    </div>
+  )
   return (
     <div className='mx-auto mt-4 w-[480px] flex flex-col'>
       <div className='p-4 text-gray-200 text-center border-b border-zinc-800 font-mono'>
         Welcome to Nymirith
       </div>
+      {errorPane}
       <div className='p-4 flex flex-col gap-3 text-gray-200'>
         <input
           value={state.username}
@@ -50,7 +60,13 @@ const LoginPage = function LoginPage() {
                   navigate('/')
                 })
                 .catch((err) => {
-                  console.log(err)
+                  const { response } = err
+                  if (response) {
+                    setState((state) => ({
+                      ...state,
+                      error: response.data.detail,
+                    }))
+                  }
                 })
             }}
           >

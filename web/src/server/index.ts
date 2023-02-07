@@ -42,7 +42,9 @@ app.post('/login', bodyParser.json(), function _onLogin(req, res, next) {
       })
     )
     .then((httpRes) => {
-      res.cookie('session', httpRes.data)
+      res.cookie('session', {
+        ...httpRes.data,
+      })
       res.json({
         id: httpRes.data.user_id,
         email: httpRes.data.email,
@@ -76,11 +78,9 @@ app.post('/register', bodyParser.json(), function _onRegister(req, res, next) {
     })
 })
 
-app.post('/logout', function _onSignOut(req, res) {
+app.get('/logout', function _onSignOut(req, res) {
   res.clearCookie('session')
-  res.json({
-    success: true,
-  })
+  res.redirect('/login')
 })
 
 app.ws('/play', function _onPlay(ws, req, next) {

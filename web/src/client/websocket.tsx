@@ -21,14 +21,16 @@ export function useWebSocket() {
 
 const WebSocketConnector: FC<{ url: string } & PropsWithChildren> =
   function WebSocketConnector(props) {
-    const [{ ws, handlers, queued }, setState] = useState<{
+    const [{ ws, handlers, queued, in_queue }, setState] = useState<{
       ws: WebSocket
       handlers: Array<(data: any) => void>
       queued: Array<any>
+      in_queue: Array<any>
     }>({
       ws: null,
       handlers: [],
       queued: [],
+      in_queue: [],
     })
     useEffect(() => {
       const ws = new WebSocket(props.url)
@@ -36,7 +38,10 @@ const WebSocketConnector: FC<{ url: string } & PropsWithChildren> =
         setState((state) => ({ ...state, ws }))
       }
       ws.onmessage = ({ data }) => {
-        handlers.forEach((item) => item(JSON.parse(data)))
+        setState((state) => {
+          state.handlers.forEach((item) => item(JSON.parse(data)))
+          return state
+        })
       }
       return () => {
         ws.close()
@@ -46,7 +51,14 @@ const WebSocketConnector: FC<{ url: string } & PropsWithChildren> =
     useEffect(() => {
       if (ws) {
         ws.onmessage = ({ data }) => {
-          handlers.forEach((item) => item(JSON.parse(data)))
+          if (handlers.length == 0) {
+            setState((state) => ({
+              ...state,
+              in_queue: [...state.in_queue, JSON.parse(data)],
+            }))
+          } else {
+            handlers.forEach((item) => item(JSON.parse(data)))
+          }
         }
         setState((state) => {
           state.queued.forEach((item) => ws.send(JSON.stringify(item)))
@@ -59,9 +71,12 @@ const WebSocketConnector: FC<{ url: string } & PropsWithChildren> =
         value={[
           (handler) => {
             setState((state) => {
+              if (state.in_queue.length > 0) {
+                state.in_queue.forEach((item) => handler(item))
+              }
               const handlers = [...state.handlers]
               handlers.push(handler)
-              return { ...state, handlers }
+              return { ...state, handlers, in_queue: [] }
             })
           },
           (data: string) => {

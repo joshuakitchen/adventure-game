@@ -11,14 +11,20 @@ import WebSocketConnector, { useWebSocket } from '../websocket'
 
 const GamePageInner = function GamePageInner() {
   const [user, setUser] = useUser()
-  const [{ gameAutocomplete, gameText }, setState] = useState({
+  const [{ gameAutocomplete, gameText, chatText }, setState] = useState({
     gameText: '',
     gameAutocomplete: '',
+    chatText: '',
   })
   const [addMessageHandler, sendMessage] = useWebSocket()
   useEffect(() => {
     addMessageHandler((message) => {
-      if (message.type === 'game') {
+      if (message.type === 'error') {
+        if (message.data === 'Incorrect email or password') {
+          window.location.href = '/logout'
+        }
+        return
+      } else if (message.type === 'game') {
         setState((state) => ({
           ...state,
           gameText: state.gameText + message.data,
@@ -29,6 +35,11 @@ const GamePageInner = function GamePageInner() {
         setState((state) => ({
           ...state,
           gameAutocomplete: `${message.data}:hidden`,
+        }))
+      } else if (message.type == 'chat') {
+        setState((state) => ({
+          ...state,
+          chatText: state.chatText + message.data,
         }))
       }
     })
@@ -50,7 +61,7 @@ const GamePageInner = function GamePageInner() {
           className='p-4 transition-colors hover:bg-zinc-700 hover:cursor-pointer'
           onClick={(e) => {
             axios
-              .post('/logout')
+              .get('/logout')
               .then(() => {
                 setUser(null)
               })
@@ -72,7 +83,7 @@ const GamePageInner = function GamePageInner() {
           input={{ autocomplete: gameAutocomplete, focusOnLoad: true }}
           onSend={(input) => {
             if (input.length > 0) {
-              if (input === 'clear' || input === 'cls') {
+              if (input.indexOf('clear') === 0 || input.indexOf('cls') === 0) {
                 setState((state) => ({ ...state, gameText: '' }))
               } else {
                 setState((state) => ({ ...state, gameAutocomplete: '' }))
@@ -91,8 +102,11 @@ const GamePageInner = function GamePageInner() {
         </div>
         <Terminal
           className='flex-1'
+          onSend={(message) => {
+            sendMessage({ type: 'game', data: `say ${message}` })
+          }}
           screen={{
-            text: '\x1b[94mThis is the chatbox, any messages will appear here.',
+            text: chatText,
           }}
         />
       </div>
