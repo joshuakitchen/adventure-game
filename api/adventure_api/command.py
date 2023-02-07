@@ -18,20 +18,23 @@ class CommandHandler(CommandHandlerBase):
     """
     if command is None:
       commands: List[str] = [self._format_help(v) for k, v in self.__class__.__dict__.items() if k.startswith('command_') and getattr(v, '__requires_state__', None) in [self._adventure._state, None]]
-      await self.send_message('Here is a list of available commands:\n\n{}\n', '\n'.join(commands))
+      await self.send_message('game', 'Here is a list of available commands:\n\n{}\n', '\n'.join(commands))
       return
-    await self.send_message('hi\n')
+    await self.send_message('game', 'hi\n')
   
   @requires_state('start')
   async def command_set(self: T, characteristic: str, type: str):
-    """
-    :command_description: Lists a group of objects.
+    """Sets the given property to the given value.
+
+    :command_short: Lists a group of objects.
+    :command_param characteristic: characteristic
+    :command_param type: type
     """
     if characteristic not in CHARACTERISTIC_LIST:
-      await self.send_message('That\'s not a characteristic I can change.\n')
+      await self.send_message('game', 'That\'s not a characteristic I can change.\n')
       return
     if type not in TYPES_LIST[characteristic]:
-      await self.send_message('You cannot set {characteristic} to type.\n', characteristic)
+      await self.send_message('game', 'You cannot set {characteristic} to type.\n', characteristic)
       return
     setattr(self._adventure._character, CHARACTERISTIC_TO_PY[characteristic], type)
     self._adventure.save()
@@ -41,15 +44,16 @@ class CommandHandler(CommandHandlerBase):
   @requires_state('start')
   async def command_list(self: T, obj: str):
     """
+    :command_type obj: characteristics
     :command_description: Lists a group of objects.
     """
     if obj == 'characteristics':
-      await self.send_message('Here is a list of characteristics for your character:\n\n{}\n', '\n'.join(CHARACTERISTIC_LIST))
+      await self.send_message('game', 'Here is a list of characteristics for your character:\n\n{}\n', '\n'.join(CHARACTERISTIC_LIST))
       return
     elif obj in TYPES_LIST:
-      await self.send_message('Here is a list of types for {}:\n\n{}\n', obj, '\n'.join(TYPES_LIST[obj]))
+      await self.send_message('game', 'Here is a list of types for {}:\n\n{}\n', obj, '\n'.join(TYPES_LIST[obj]))
       return
-    await self.send_message('That\'s not something I can list.\n')
+    await self.send_message('game', 'That\'s not something I can list.\n')
 
   @requires_state('start')
   async def command_begin(self: T):
@@ -69,4 +73,7 @@ class CommandHandler(CommandHandlerBase):
 .........   \033[33m♣\033[0m\033[33m♣\033[0m@\033[33m♣\033[0m\033[33m♣\033[0m
 ..@......   ♣♣♣♣♣
 .........   ♣♣♣♣♣\n'''
-    await self.send_message(MAP)
+    await self.send_message('game', MAP)
+
+  async def command_clear(self: T):
+    pass # Placeholder for the client only clear command

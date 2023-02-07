@@ -1,0 +1,27 @@
+{
+  "configurations": [
+    {
+      "type": "python",
+      "name": "API",
+      "request": "launch",
+      "program": "${workspaceFolder}/api/main.py",
+      "cwd": "${workspaceFolder}/api",
+      "console": "internalConsole"
+    },
+    {
+      "type": "node",
+      "internalConsoleOptions": "neverOpen",
+      "name": "APP",
+      "program": "${workspaceFolder}/web/src/server/index.ts",
+      "cwd": "${workspaceFolder}/web",
+      "request": "launch",
+      "restart": true,
+      "runtimeExecutable": "${workspaceFolder}/web/node_modules/nodemon/bin/nodemon.js",
+      "runtimeArgs": ["-w", "src/server/*.*", "-w", "templates/*.*", "--ext", "js,jsx,ts,tsx,json,html", "--exec", "ts-node"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "console": "internalConsole",
+    }
+  ]
+}

@@ -9,7 +9,10 @@ import React, {
 
 const WebSocketContext =
   createContext<
-    [(handler: (data: string) => void) => void, (data: string) => void]
+    [
+      (handler: (data: { type: string; data: string }) => void) => void,
+      (data: any) => void
+    ]
   >(null)
 
 export function useWebSocket() {
@@ -33,7 +36,7 @@ const WebSocketConnector: FC<{ url: string } & PropsWithChildren> =
         setState((state) => ({ ...state, ws }))
       }
       ws.onmessage = ({ data }) => {
-        handlers.forEach((item) => item(data))
+        handlers.forEach((item) => item(JSON.parse(data)))
       }
       return () => {
         ws.close()
@@ -43,10 +46,10 @@ const WebSocketConnector: FC<{ url: string } & PropsWithChildren> =
     useEffect(() => {
       if (ws) {
         ws.onmessage = ({ data }) => {
-          handlers.forEach((item) => item(data))
+          handlers.forEach((item) => item(JSON.parse(data)))
         }
         setState((state) => {
-          state.queued.forEach((item) => ws.send(item))
+          state.queued.forEach((item) => ws.send(JSON.stringify(item)))
           return { ...state, queued: [] }
         })
       }
@@ -63,7 +66,7 @@ const WebSocketConnector: FC<{ url: string } & PropsWithChildren> =
           },
           (data: string) => {
             if (ws) {
-              ws.send(data)
+              ws.send(JSON.stringify(data))
             } else {
               setState((state) => {
                 const queued = [...state.queued, data]

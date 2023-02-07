@@ -3,6 +3,10 @@
     "esModuleInterop": true,
     "moduleResolution": "node",
     "jsx": "react",
-    "target": "es2015"
+    "target": "es2015",
+    "baseUrl": ".",
+    "paths": {
+      "@components": ["components"]
+    }
   }
 }

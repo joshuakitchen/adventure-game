@@ -1,5 +1,6 @@
-import uvicorn
+import logging
 import jwt
+import json
 from fastapi import Depends, FastAPI, HTTPException, WebSocket, Header, WebSocketDisconnect
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.security.utils import get_authorization_scheme_param
@@ -50,11 +51,17 @@ async def play(ws: WebSocket, authorization = Header()):
   command_handler = CommandHandler(adventure)
   try:
     while True:
-        data = await ws.receive_text()
-        if data == 'ready' and not ready:
+        data = await ws.receive_json()
+        if data['type'] == 'ready' and not ready:
           ready = True
-          await ws.send_text(adventure.get_intro())
+          await ws.send_json(dict(type='game', data=adventure.get_intro()))
         elif ready:
-          await command_handler.handle_input(data)
+          if data['type'] == 'autocomplete':
+            await command_handler.handle_autocomplete_request(data['data'].split(' '))
+          elif data['type'] == 'game':
+            await command_handler.handle_input(data['data'].split(' '))
   except WebSocketDisconnect:
     pass
+  except Exception as e:
+    logging.exception(e)
+    await ws.close()

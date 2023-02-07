@@ -301,5 +301,5 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-api/saves/
+api/data/saves/*
 api/data/adventure.db

@@ -1,6 +1,7 @@
 'use strict'
 
 const path = require('path')
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin')
 
 module.exports = (args, argv) => ({
   entry: ['./src/client/index.tsx', './src/client/style/index.css'],
@@ -18,7 +19,10 @@ module.exports = (args, argv) => ({
     ]
   },
   resolve: {
-    extensions: ['.ts', '.tsx', '.js', '.jsx']
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
+    plugins: [new TsconfigPathsPlugin({
+      configFile: './src/client/tsconfig.json'
+    })]
   },
   output: {
     path: path.resolve(__dirname, 'build', 'static')

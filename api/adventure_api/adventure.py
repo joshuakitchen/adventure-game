@@ -3,9 +3,9 @@ from fastapi import WebSocket
 from .discovery import Discovery
 from .world import World
 
-INTRODUCTION_TEXT = '''Welcome to the world of Alvara
+INTRODUCTION_TEXT = '''Welcome to the world of Nymirith
 
-Alvara is a unique experience for player discovery, the world offers a variety of features and only ever hints at what you can do, you\'ll find hints within the game world.
+Nymirith is a unique experience for player discovery, the world offers a variety of features and only ever hints at what you can do, you\'ll find hints within the game world.
 
 When a discovery is made it will be made available to everyone once you publish it, being the first to publish a discovery will unlock new npcs, concepts and allow everyone to use the knowledge you\'ve gained. The things you discover could quite literally change the world.
 
@@ -89,8 +89,8 @@ class Adventure:
       return f'Hello, you were in the middle of creating your character, here\'s how you look so far:\n{self._character.describe_self()}\n\n'
     return 'Welcome back\n'
 
-  async def send_message(self, message: str, *args, **kwargs):
-    await self._ws.send_text(message.format(*args, **kwargs))
+  async def send_message(self, type: str, message: str, *args, **kwargs):
+    await self._ws.send_text(json.dumps(dict(type=type, data=message.format(*args, **kwargs))))
   
   def save(self):
     with open(f'./data/saves/{self._user_id}.json', 'w') as f:
