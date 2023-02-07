@@ -22,6 +22,11 @@ const GamePageInner = function GamePageInner() {
       if (message.type === 'error') {
         if (message.data === 'Incorrect email or password') {
           window.location.href = '/logout'
+        } else {
+          setState((state) => ({
+            ...state,
+            gameText: state.gameText + '\x1b[31m' + message.data + '\x1b[0m\n',
+          }))
         }
         return
       } else if (message.type === 'game') {

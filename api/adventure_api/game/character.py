@@ -1,16 +1,21 @@
 import json
 from fastapi import WebSocket
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from .world import World
 from ..config import get_conn
 
-INTRODUCTION_TEXT = ''' _  _            _     _ _   _
+if TYPE_CHECKING:
+    from .cell import Cell
+
+TITLE = ''' _  _            _     _ _   _
 | \\| |_  _ _ __ (_)_ _(_) |_| |_
 | .` | || | '  \\| | '_| |  _| ' \\
 |_|\\_|\\_, |_|_|_|_|_| |_|\\__|_||_|
       |__/
 
+Welcome to the world of Nymirith.'''
 
-Welcome to the world of Nymirith.
+INTRODUCTION_TEXT = '''{}
 
 Type "begin" followed by your character name to start.
 \n\n'''
@@ -23,6 +28,9 @@ class Character:
     _ws: WebSocket
     _state: str
     _name: Optional[str]
+    _x: int
+    _z: int
+    _cell: Optional['Cell']
 
     def __init__(self, id: str, ws: WebSocket):
         """Constructs the Character
@@ -33,6 +41,8 @@ class Character:
         self._ws = ws
         self._state = 'intro'
         self._name = None
+        self._x = 0
+        self._z = 0
         self.load_character()
 
     async def handle_login(self):
@@ -40,7 +50,15 @@ class Character:
         after the WebSocket connection and should provide either an introduction
         for new players, or an update for old players."""
         if self._state == 'intro':
-            await self.send_message('game', INTRODUCTION_TEXT, 'test')
+            await self.send_message('game', INTRODUCTION_TEXT, TITLE, 'test')
+        else:
+            await self.send_message('game', '{}\n\nWelcome back, {}.\n\n', TITLE, self._name)
+            self._cell = World.load_cell(self._x, self._z, self)
+
+    async def handle_logout(self):
+        if self._state == 'intro':
+            return
+        World.unload_cell(self._x, self._z, self)
 
     async def send_message(self, type: str, message: str, *args, **kwargs):
         """Sends a message to the Characters connected WebSocket.
@@ -58,7 +76,10 @@ class Character:
 
     def to_json(self) -> str:
         """Converts the character to JSON for saving."""
-        return json.dumps(dict(state=self._state, name=self._name))
+        return json.dumps(
+            dict(
+                state=self._state, name=self._name, x=self._x,
+                z=self._z))
 
     def from_json(self, raw_data: str):
         """Converts the character back from JSON for loading.
@@ -67,6 +88,8 @@ class Character:
         data: Dict[str, Any] = json.loads(raw_data)
         self._state = data.get('state', 'intro')
         self._name = data.get('name', None)
+        self._x = data.get('x', None)
+        self._z = data.get('z', None)
 
     def load_character(self):
         """Loads the character using the current database driver."""

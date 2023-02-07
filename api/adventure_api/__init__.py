@@ -85,16 +85,25 @@ async def play(ws: WebSocket, authorization=Header()):
         await ws.close()
         return
     ready = False
-    character = Character(user['id'], ws)
-    command_handler = CommandHandler(character)
+    already_logged_in = False
+    for loaded_character in World._characters:
+        if loaded_character._id == user['id']:
+            already_logged_in = True
+    character: Optional[Character] = None
+    command_handler: Optional[CommandHandler] = None
     try:
         while True:
             data = await ws.receive_json()
             if data['type'] == 'ready' and not ready:
                 ready = True
-                World.add_player(character)
-                await character.handle_login()
-            elif ready:
+                if not already_logged_in:
+                    character = Character(user['id'], ws)
+                    command_handler = CommandHandler(character)
+                    World.add_player(character)
+                    await character.handle_login()
+                else:
+                    await ws.send_json(dict(type='error', data='You are already logged in elsewhere.'))
+            elif ready and character and command_handler:
                 if data['type'] == 'autocomplete':
                     await command_handler.handle_autocomplete_request(data['data'].split(' '))
                 elif data['type'] == 'game':
@@ -105,5 +114,6 @@ async def play(ws: WebSocket, authorization=Header()):
         logging.exception(e)
         await ws.close()
     finally:
-        character.save_character()
-        World.remove_player(character)
+        if character:
+            character.save_character()
+            World.remove_player(character)
