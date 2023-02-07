@@ -52,7 +52,7 @@ class Cell:
 
     def get_icon(self):
         if self._biome == 'forest':
-            return '\x1b[32m♣\x1b[0m'
+            return '\x1b[32m♣\uFE0E\x1b[0m'
         elif self._biome == 'mountain':
             return '\x1b[90m^\x1b[0m'
         elif self._biome == 'plains':

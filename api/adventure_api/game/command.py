@@ -15,9 +15,14 @@ class CommandHandler(CommandHandlerBase):
     async def command_help(self: T, message: Optional[str] = None):
         """Either sends a list of all commands to the player or if a page is
         present, sends a detailed description of page or command that is
-        documented."""
+        documented.
+
+        :command_alias: h
+        :command_summary: Displays help information"""
         commands = [self._format_help(x) for x in self._get_command_list()]
-        await self.send_message('game', 'Here is a list of commands you can use in the current context:\n{}\n\n', '\n'.join(commands))
+        longest = max([len(v) for v, _ in commands])
+        command_print = [c.ljust(longest, ' ') + ' - ' + d for c, d in commands]
+        await self.send_message('game', 'Here is a list of commands you can use in the current context:\n{}\n\n', '\n'.join(command_print))
 
     @requires_state('intro')
     async def command_begin(self: T, name: List[str]):
@@ -43,7 +48,7 @@ class CommandHandler(CommandHandlerBase):
     async def command_survey(self: T):
         """Surveys the surrounding area.
 
-        :command_summary: Surveys the surrounding area."""
+        :command_summary: Surveys the surrounding area"""
         m = ''
 
         for z in range(SURVEY_HEIGHT):
@@ -61,5 +66,6 @@ class CommandHandler(CommandHandlerBase):
     async def command_clear(self: T):
         """Clears the terminal
 
+        :command_alias: cls
         :command_summary: Clears the terminal"""
         pass  # Placeholder for the client only clear command

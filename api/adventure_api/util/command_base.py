@@ -116,7 +116,7 @@ class CommandHandlerBase:
             desc_arr = [
                 x[1] for x in re.findall(
                     DOC_RE,
-                    fn.__doc__) if x[0] == 'command_description']
+                    fn.__doc__) if x[0] == 'command_summary']
             if desc_arr:
                 desc = desc_arr[0].strip()
         params = ' '.join(
@@ -124,7 +124,7 @@ class CommandHandlerBase:
              if param.default == inspect._empty else f'[{param.name}]'
              for param in list(inspect.signature(fn).parameters.values())
              [1:]])
-        return f'{fn.__name__[8:]} {params} - {desc}'
+        return (f'{fn.__name__[8:]} {params}', desc)
 
     def _get_command_list(self: T, dewrap: bool = False) -> List[Callable]:
         c_list = [
