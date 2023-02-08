@@ -20,6 +20,7 @@ def requires_state(*args):
         _inner.__wraps__ = f
         _inner.__requires_state__ = args
         _inner.__doc__ = f.__doc__
+        _inner.__name__ = f.__name__
         return _inner
     return _requires_state
 
@@ -104,9 +105,11 @@ class CommandHandlerBase:
         if ':' in doc:
             desc, params = doc.split(':', 1)
             matches = re.findall(DOC_RE, ':' + params)
+            desc = '\n'.join([line.strip() for line in desc.split('\n')])
 
             return (desc.strip(), {x[0].strip(): x[1].strip() for x in matches})
         else:
+            doc = '\n'.join([line.strip() for line in doc.split('\n')])
             return (doc.strip(), {})
 
     def _format_help(self: T, fn: Callable):

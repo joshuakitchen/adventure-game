@@ -1,0 +1,8 @@
+{
+  "forest": {
+    "scavenge": [
+      ["rock", {"shape": "smooth"}],
+      ["rock", {"shape": "pointy"}]
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "stick": {
+    "name": "{material} Stick",
+    "command_name": "{material}_stick",
+    "slots_taken": 2,
+    "qualifiers": {
+      "material": ["oak"]
+    }
+  },
+  "rock": {
+    "name": "{shape} Rock",
+    "command_name": "{shape}_rock",
+    "slots_taken": 1,
+    "qualifiers": {
+      "shape": ["pointy", "smooth"]
+    }
+  }
+}

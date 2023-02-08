@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { FC, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import {
   FontAwesomeIcon,
@@ -8,6 +8,7 @@ import { Terminal } from '@components'
 import { useUser } from '../user'
 import axios from 'axios'
 import WebSocketConnector, { useWebSocket } from '../websocket'
+import { AdminModal } from '@modals'
 
 const GamePageInner = function GamePageInner() {
   const [user, setUser] = useUser()
@@ -119,7 +120,7 @@ const GamePageInner = function GamePageInner() {
   )
 }
 
-const GamePage = function GamePage() {
+const GamePage: FC<{}> = function GamePage() {
   const [user, setUser] = useUser()
   const navigate = useNavigate()
   useEffect(() => {
@@ -136,6 +137,7 @@ const GamePage = function GamePage() {
         document.location.host
       }/play`}
     >
+      <AdminModal />
       <GamePageInner />
     </WebSocketConnector>
   )

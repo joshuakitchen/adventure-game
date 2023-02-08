@@ -6,7 +6,8 @@
     "target": "es2015",
     "baseUrl": ".",
     "paths": {
-      "@components": ["components"]
+      "@components": ["components"],
+      "@modals": ["modals"]
     }
   }
 }

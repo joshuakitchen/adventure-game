@@ -13,6 +13,14 @@ class World:
     _loaded_cells: ClassVar[List[Cell]]
 
     @classmethod
+    async def tick(cls):
+        """Called each tick (600ms), applies different functions which could be
+        useful in the game world."""
+        for cell in cls._loaded_cells:
+            for character in cell._characters:
+                await character.tick()
+
+    @classmethod
     def load_cell(cls, x: int, z: int, character: 'Character'):
         """Loads a cell and adds the character to it, this ensures players can
         all see and interact with eachother and entities within the same cell.

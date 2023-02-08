@@ -1,11 +1,16 @@
+import json
+import random
 from noise import snoise2
-from typing import Any, List, TYPE_CHECKING
+from typing import Any, Dict, Optional, List, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .character import Character
 
 HEIGHT_SCALE = 60
 TREE_SCALE = 30
+
+with open('./data/biomes.json', 'r') as f:
+    BIOME_DATA: Dict[str, Any] = json.loads(f.read())
 
 
 class Cell:
@@ -58,3 +63,20 @@ class Cell:
         elif self._biome == 'plains':
             return '\x1b[32m"\x1b[0m'
         return '\x1b[34m~\x1b[0m'
+
+    def get_scavenge_item(self) -> Optional[Tuple[str, Dict[str, str]]]:
+        scavenge_list = self._get_scavenge_list()
+        if scavenge_list is None:
+            return None
+        item = random.choice(scavenge_list)
+        return (item[0], item[1])
+
+    def _get_scavenge_list(self) -> Optional[List[Any]]:
+        """Generates the list of items that can be scavenged."""
+        if self._biome not in BIOME_DATA:
+            return None
+        return BIOME_DATA[self._biome]['scavenge']
+
+    @property
+    def can_scavenge(self) -> bool:
+        return self._get_scavenge_list is not None
