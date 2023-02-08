@@ -48,6 +48,7 @@ app.post('/login', bodyParser.json(), function _onLogin(req, res, next) {
       res.json({
         id: httpRes.data.user_id,
         email: httpRes.data.email,
+        is_admin: httpRes.data.is_admin,
       })
     })
     .catch((err) => {
@@ -140,6 +141,7 @@ app.get('/*', function _onGet(req, res) {
       JSON.stringify({
         id: req.cookies.session.user_id,
         email: req.cookies.session.email,
+        is_admin: req.cookies.session.is_admin,
       })
     )
   }

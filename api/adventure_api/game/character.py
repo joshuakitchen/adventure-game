@@ -56,6 +56,7 @@ class Character:
         self._action = None
         self._action_timer = 0
         self._inventory = [('stick', dict(material='oak'))]
+        self._cell = None
         self.load_character()
 
     async def handle_login(self):
@@ -127,20 +128,17 @@ class Character:
 
     def to_json(self) -> str:
         """Converts the character to JSON for saving."""
-        return json.dumps(
-            dict(
-                state=self._state, name=self._name, x=self._x,
-                z=self._z))
+        return json.dumps(dict())
 
-    def from_json(self, raw_data: str):
+    def from_json(self, raw_data: Tuple[str, int, int, str, str]):
         """Converts the character back from JSON for loading.
 
         :param data: The data as a string."""
-        data: Dict[str, Any] = json.loads(raw_data)
-        self._state = data.get('state', 'intro')
-        self._name = data.get('name', None)
-        self._x = data.get('x', 0)
-        self._z = data.get('z', 0)
+        self._name = raw_data[0]
+        self._x = raw_data[1]
+        self._z = raw_data[2]
+        self._state = raw_data[3]
+        data: Dict[str, Any] = json.loads(raw_data[4])
 
     def load_character(self):
         """Loads the character using the current database driver."""
@@ -150,10 +148,11 @@ class Character:
         elif driver == 'postgres':
             with conn.cursor() as cur:
                 cur.execute(
-                    'SELECT state FROM users WHERE id = %s', [self._id])
+                    'SELECT name, x, z, state, additional_data FROM users WHERE id = %s', [
+                        self._id])
                 data = cur.fetchone()
-            if data and data[0]:
-                self.from_json(data[0])
+            if data:
+                self.from_json(data)
 
     def save_character(self):
         """Saves the character using the current database driver."""
@@ -163,8 +162,8 @@ class Character:
         elif driver == 'postgres':
             with conn.cursor() as cur:
                 cur.execute(
-                    'UPDATE users SET state = %s WHERE id = %s', [
-                        self.to_json(), self._id])
+                    'UPDATE users SET name = %s, x = %s, z = %s, state = %s, additional_data = %s WHERE id = %s', [
+                        self._name, self._x, self._z, self._state, self.to_json(), self._id])
                 conn.commit()
 
     @property

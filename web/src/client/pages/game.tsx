@@ -92,7 +92,11 @@ const GamePageInner = function GamePageInner() {
               if (input.indexOf('clear') === 0 || input.indexOf('cls') === 0) {
                 setState((state) => ({ ...state, gameText: '' }))
               } else {
-                setState((state) => ({ ...state, gameAutocomplete: '' }))
+                setState((state) => ({
+                  ...state,
+                  gameText: state.gameText + '> ' + input + '\n',
+                  gameAutocomplete: '',
+                }))
                 sendMessage({ type: 'game', data: input })
               }
             }

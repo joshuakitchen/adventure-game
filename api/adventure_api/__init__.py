@@ -68,7 +68,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         'access_token': jwt.encode({'type': 'access_token', 'user_id': user[0], 'email': user[1], 'client_id': CLIENT_ID}, CLIENT_SECRET, algorithm='HS256'),
         'refresh_token': jwt.encode({'type': 'refresh_token', 'user_id': user[0], 'email': user[1], 'client_id': CLIENT_ID}, CLIENT_SECRET, algorithm='HS256'),
         'user_id': user[0],
-        'email': user[1]
+        'email': user[1],
+        'is_admin': user[3]
     }
 
 
