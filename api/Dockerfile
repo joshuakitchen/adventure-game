@@ -8,6 +8,7 @@ RUN apk add --no-cache postgresql-libs && \
     pip install -r requirements.txt && \
     apk --purge del .build-deps
 
+COPY data data
 COPY adventure_api adventure_api
 COPY main.py main.py
 
