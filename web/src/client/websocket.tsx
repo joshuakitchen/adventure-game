@@ -22,31 +22,45 @@ export function useWebSocket() {
 
 const WebSocketConnector: FC<{ url: string } & PropsWithChildren> =
   function WebSocketConnector(props) {
-    const [{ ws, handlers, queued, in_queue }, setState] = useState<{
-      ws: WebSocket
-      handlers: Array<(data: any) => void>
-      queued: Array<any>
-      in_queue: Array<any>
-    }>({
-      ws: null,
-      handlers: [],
-      queued: [],
-      in_queue: [],
-    })
+    const [{ ws, handlers, queued, in_queue, retryAttempts }, setState] =
+      useState<{
+        ws: WebSocket
+        handlers: Array<(data: any) => void>
+        queued: Array<any>
+        in_queue: Array<any>
+        retryAttempts: number
+      }>({
+        ws: null,
+        handlers: [],
+        queued: [],
+        in_queue: [],
+        retryAttempts: 0,
+      })
     useEffect(() => {
       if (ws === null) {
-        const ws = new WebSocket(props.url)
-        ws.onopen = () => {
-          setState((state) => ({ ...state, ws }))
+        const connect = function _connect() {
+          const ws = new WebSocket(props.url)
+          ws.onopen = () => {
+            setState((state) => ({ ...state, ws }))
+          }
+          ws.onmessage = ({ data }) => {
+            setState((state) => {
+              state.handlers.forEach((item) => item(JSON.parse(data)))
+              return { ...state, retryAttempts: 0 }
+            })
+          }
+          ws.onclose = () => {
+            setState((state) => ({
+              ...state,
+              ws: null,
+              retryAttempts: state.retryAttempts + 1,
+            }))
+          }
         }
-        ws.onmessage = ({ data }) => {
-          setState((state) => {
-            state.handlers.forEach((item) => item(JSON.parse(data)))
-            return state
-          })
-        }
-        ws.onclose = () => {
-          setState((state) => ({ ...state, ws: null }))
+        if (retryAttempts === 0) {
+          connect()
+        } else {
+          setTimeout(connect, Math.min(retryAttempts * 500, 15000))
         }
       }
       return () => {

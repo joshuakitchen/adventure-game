@@ -12,7 +12,9 @@
         "DB_HOST": "localhost",
         "DB_USER": "postgres",
         "DB_PASSWORD": "postgres",
-        "DB_DATABASE": "pg"
+        "DB_DATABASE": "pg",
+        "CLIENT_ID": "4752871f-71c5-4940-8c1e-bee3be614c63",
+        "CLIENT_SECRET": "0f2321742fc62e3390e9b1d2161be5665652a1c9e1bb781f012edf8"
       }
     },
     {
@@ -29,7 +31,11 @@
         "<node_internals>/**"
       ],
       "console": "internalConsole",
-      "outputCapture": "std"
+      "outputCapture": "std",
+      "env": {
+        "CLIENT_ID": "4752871f-71c5-4940-8c1e-bee3be614c63",
+        "CLIENT_SECRET": "0f2321742fc62e3390e9b1d2161be5665652a1c9e1bb781f012edf8"
+      }
     }
   ]
 }

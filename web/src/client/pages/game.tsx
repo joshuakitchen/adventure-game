@@ -73,7 +73,13 @@ const GamePageInner = function GamePageInner() {
   }, [])
   useEffect(() => {
     if (socketState === 'open' && !isReady) {
-      sendMessage({ type: 'ready' })
+      if (readyAttempts === 0) {
+        sendMessage({ type: 'ready' })
+      } else {
+        setTimeout(() => {
+          sendMessage({ type: 'ready' })
+        }, Math.min(readyAttempts * 500, 15000))
+      }
     } else if (socketState === 'closed') {
       setState((state) => ({ ...state, isReady: false }))
     }

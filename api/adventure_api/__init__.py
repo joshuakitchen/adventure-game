@@ -4,6 +4,7 @@ import logging
 import time
 import jwt
 import re
+import os
 from fastapi import Depends, FastAPI, HTTPException, WebSocket, Header, WebSocketDisconnect
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.security.utils import get_authorization_scheme_param
@@ -13,8 +14,8 @@ from .game import Character, BasicCommands, CommandHandler, World, WorldCommands
 from .user import check_password, get_user, register_user
 from .setup import setup_database
 
-CLIENT_ID = '4752871f-71c5-4940-8c1e-bee3be614c63'
-CLIENT_SECRET = '0f2321742fc62e3390e9b1d2161be5665652a1c9e1bb781f012edf8a3f1176721e257a4866703cce'
+CLIENT_ID = os.environ['CLIENT_ID']
+CLIENT_SECRET = os.environ['CLIENT_SECRET']
 
 app = FastAPI()
 
@@ -29,10 +30,7 @@ class RegisterRequest(BaseModel):
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
-    try:
-        decoded_token = jwt.decode(token, CLIENT_SECRET, algorithms=['HS256'])
-    except jwt.InvalidSignatureError:
-        raise HTTPException(status_code=400, detail='Invalid token')
+    decoded_token = jwt.decode(token, CLIENT_SECRET, algorithms=['HS256'])
     return {'id': decoded_token['user_id'], 'email': decoded_token['email']}
 
 
@@ -83,7 +81,7 @@ async def play(ws: WebSocket, authorization=Header()):
     user: Optional[Dict[str, str]] = None
     try:
         user = await get_current_user(param)
-    except jwt.exceptions.DecodeError:
+    except (jwt.exceptions.DecodeError, jwt.exceptions.InvalidSignatureError):
         error = 'Incorrect email or password'
     if error or not user:
         await ws.send_json(dict(type='error', data=error))

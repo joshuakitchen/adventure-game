@@ -13,6 +13,8 @@ import { getStaticPath } from './util'
 
 const API_URI = process.env.API_URL || 'http://localhost:8081'
 const WS_URI = process.env.WS_URL || 'ws://localhost:8081/play'
+const CLIENT_ID = process.env.CLIENT_ID
+const CLIENT_SECRET = process.env.CLIENT_SECRET
 
 const appBase = express()
 const { app } = expressWs(appBase)
@@ -36,9 +38,8 @@ app.post('/login', bodyParser.json(), function _onLogin(req, res, next) {
       `${API_URI}/token`,
       qs.stringify({
         ...req.body,
-        client_id: '4752871f-71c5-4940-8c1e-bee3be614c63',
-        client_secret:
-          '0f2321742fc62e3390e9b1d2161be5665652a1c9e1bb781f012edf8a3f1176721e257a4866703cce',
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
       })
     )
     .then((httpRes) => {
