@@ -20,12 +20,14 @@ class Cell:
     _x: int
     _z: int
     _biome: str
+    _claimed_by: Optional[str]
     _characters: List['Character']
 
     def __init__(self, x: int, z: int):
         self._x = x
         self._z = z
         self._characters = []
+        self._claimed_by = None
         self.load()
 
     def load(self):
@@ -57,11 +59,11 @@ class Cell:
 
     def get_icon(self):
         if self._biome == 'forest':
-            return '\x1b[32m♣\uFE0E\x1b[0m'
+            return '\x1b[32m"\uFE0E\x1b[0m'
         elif self._biome == 'mountain':
             return '\x1b[90m^\x1b[0m'
         elif self._biome == 'plains':
-            return '\x1b[32m"\x1b[0m'
+            return '\x1b[32m.\x1b[0m'
         return '\x1b[34m~\x1b[0m'
 
     def get_scavenge_item(self) -> Optional[Tuple[str, Dict[str, str]]]:

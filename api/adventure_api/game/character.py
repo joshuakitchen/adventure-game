@@ -2,6 +2,7 @@ import json
 import random
 from fastapi import WebSocket
 from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+from .commands import BasicCommands, ChatCommands, CommandHandler, IntroCommands, WorldCommands
 from .colors import replace_colors
 from .world import World
 from .item import Item
@@ -41,6 +42,9 @@ class Character:
     _inventory: List[Tuple[str, Dict[str, str]]]
     _action: Optional[str]
     _action_timer: int
+    _attributes: Dict[str, Tuple[int, int]]
+    _skills: Dict[str, Tuple[int, int]]
+    _command_handler: CommandHandler
 
     def __init__(self, id: str, ws: WebSocket):
         """Constructs the Character
@@ -55,9 +59,19 @@ class Character:
         self._z = 0
         self._action = None
         self._action_timer = 0
-        self._inventory = [('stick', dict(material='oak'))]
+        self._inventory = []
         self._cell = None
+        self._hp = 10
+        self._attributes = dict(
+            constutition=(1, 1),
+            strength=(1, 1),
+            magic=(1, 1),
+            dexterity=(1, 1)
+        )
+        self._command_handler = CommandHandler(self)
+        self._command_handler.add_command_handler(BasicCommands())
         self.load_character()
+        self.set_state(self._state)
 
     async def handle_login(self):
         """Handles the character entering the world, this will take place just
@@ -126,6 +140,22 @@ class Character:
         message = replace_colors(message.format(*args, **kwargs))
         await self._ws.send_json(dict(type=type, data=message))
 
+    def set_state(self, state: str):
+        """Sets the state of this character.
+
+        :param state: The state to set the character in."""
+        if self._state == 'intro':
+            self._command_handler.remove_command_handler(IntroCommands)
+        elif self._state == 'adventure':
+            self._command_handler.remove_command_handler(WorldCommands)
+            self._command_handler.remove_command_handler(ChatCommands)
+        self._state = state
+        if self._state == 'adventure':
+            self._command_handler.add_command_handler(WorldCommands())
+            self._command_handler.add_command_handler(ChatCommands())
+        elif self._state == 'intro':
+            self._command_handler.add_command_handler(IntroCommands())
+
     def to_json(self) -> str:
         """Converts the character to JSON for saving."""
         return json.dumps(dict())
@@ -169,3 +199,11 @@ class Character:
     @property
     def inventory(self):
         return [Item.get_item_properties(item) for item in self._inventory]
+
+    @property
+    def command_handler(self):
+        return self._command_handler
+
+    @property
+    def free_slots(self):
+        return 5

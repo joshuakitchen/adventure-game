@@ -12,14 +12,32 @@ import { AdminModal } from '@modals'
 
 const GamePageInner = function GamePageInner() {
   const [user, setUser] = useUser()
-  const [{ gameAutocomplete, gameText, chatText }, setState] = useState({
+  const [
+    {
+      gameAutocomplete,
+      gameText,
+      gameInput,
+      chatText,
+      chatInput,
+      isReady,
+      readyAttempts,
+    },
+    setState,
+  ] = useState({
     gameText: '',
+    gameInput: '',
     gameAutocomplete: '',
     chatText: '',
+    chatInput: '',
+    isReady: false,
+    readyAttempts: 0,
   })
-  const [addMessageHandler, sendMessage] = useWebSocket()
+  const [socketState, addMessageHandler, sendMessage] = useWebSocket()
   useEffect(() => {
     addMessageHandler((message) => {
+      if (!isReady) {
+        setState((state) => ({ ...state, isReady: true, readyAttempts: 0 }))
+      }
       if (message.type === 'error') {
         if (message.data === 'Incorrect email or password') {
           window.location.href = '/logout'
@@ -35,13 +53,16 @@ const GamePageInner = function GamePageInner() {
           ...state,
           gameText: state.gameText + message.data,
         }))
-      } else if (message.type === 'autocomplete') {
+      } else if (message.type === 'suggestion') {
         setState((state) => ({ ...state, gameAutocomplete: message.data }))
-      } else if (message.type === 'autocomplete:hidden') {
-        setState((state) => ({
-          ...state,
-          gameAutocomplete: `${message.data}:hidden`,
-        }))
+      } else if (message.type === 'autocomplete') {
+        if (message.data.length > 0) {
+          setState((state) => ({
+            ...state,
+            gameInput: message.data,
+            gameAutocomplete: '',
+          }))
+        }
       } else if (message.type == 'chat') {
         setState((state) => ({
           ...state,
@@ -49,8 +70,14 @@ const GamePageInner = function GamePageInner() {
         }))
       }
     })
-    sendMessage({ type: 'ready' })
   }, [])
+  useEffect(() => {
+    if (socketState === 'open' && !isReady) {
+      sendMessage({ type: 'ready' })
+    } else if (socketState === 'closed') {
+      setState((state) => ({ ...state, isReady: false }))
+    }
+  }, [socketState, isReady])
   return (
     <div className='mx-auto h-full flex flex-col md:flex-row text-gray-300'>
       <nav className='flex flex-row md:flex-col border-l border-zinc-800 bg-zinc-800'>
@@ -84,25 +111,36 @@ const GamePageInner = function GamePageInner() {
       </nav>
       <div className='flex-1 h-1 md:h-auto'>
         <Terminal
+          value={gameInput}
           className='h-full'
           screen={{ text: gameText, scrollOnChange: true }}
           input={{ autocomplete: gameAutocomplete, focusOnLoad: true }}
           onSend={(input) => {
             if (input.length > 0) {
               if (input.indexOf('clear') === 0 || input.indexOf('cls') === 0) {
-                setState((state) => ({ ...state, gameText: '' }))
+                setState((state) => ({
+                  ...state,
+                  gameAutocomplete: '',
+                  gameText: '',
+                  gameInput: '',
+                }))
               } else {
                 setState((state) => ({
                   ...state,
                   gameText: state.gameText + '> ' + input + '\n',
                   gameAutocomplete: '',
+                  gameInput: '',
                 }))
                 sendMessage({ type: 'game', data: input })
               }
             }
           }}
           onChange={(input) => {
-            sendMessage({ type: 'autocomplete', data: input })
+            setState((state) => ({ ...state, gameInput: input }))
+            sendMessage({ type: 'autocomplete_suggest', data: input })
+          }}
+          onSuggest={(input) => {
+            sendMessage({ type: 'autocomplete_get', data: input })
           }}
         />
       </div>
@@ -111,7 +149,9 @@ const GamePageInner = function GamePageInner() {
           <Terminal.Screen text={'\x1b[33mTest'} />
         </div>
         <Terminal
+          value={chatInput}
           className='flex-1'
+          onChange={(text) => {}}
           onSend={(message) => {
             sendMessage({ type: 'game', data: `say ${message}` })
           }}

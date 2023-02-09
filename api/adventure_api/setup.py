@@ -1,6 +1,3 @@
-from bcrypt import hashpw, gensalt
-from uuid import uuid4
-
 from .config import get_conn
 
 

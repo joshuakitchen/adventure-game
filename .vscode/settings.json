@@ -18,5 +18,7 @@
     "python.formatting.provider": "autopep8",
     "python.formatting.autopep8Path": "autopep8",
     "python.formatting.autopep8Args": ["--max-line-length", "80", "--experimental", "-a"],
-    "python.analysis.typeCheckingMode": "basic"
+    "python.analysis.typeCheckingMode": "off",
+    "python.analysis.importFormat": "relative",
+    "python.analysis.inlayHints.variableTypes": false
 }

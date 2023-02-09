@@ -10,6 +10,7 @@ import React, {
 const WebSocketContext =
   createContext<
     [
+      string,
       (handler: (data: { type: string; data: string }) => void) => void,
       (data: any) => void
     ]
@@ -33,21 +34,28 @@ const WebSocketConnector: FC<{ url: string } & PropsWithChildren> =
       in_queue: [],
     })
     useEffect(() => {
-      const ws = new WebSocket(props.url)
-      ws.onopen = () => {
-        setState((state) => ({ ...state, ws }))
-      }
-      ws.onmessage = ({ data }) => {
-        setState((state) => {
-          state.handlers.forEach((item) => item(JSON.parse(data)))
-          return state
-        })
+      if (ws === null) {
+        const ws = new WebSocket(props.url)
+        ws.onopen = () => {
+          setState((state) => ({ ...state, ws }))
+        }
+        ws.onmessage = ({ data }) => {
+          setState((state) => {
+            state.handlers.forEach((item) => item(JSON.parse(data)))
+            return state
+          })
+        }
+        ws.onclose = () => {
+          setState((state) => ({ ...state, ws: null }))
+        }
       }
       return () => {
-        ws.close()
-        setState((state) => ({ ...state, ws: null }))
+        if (ws !== null) {
+          ws.close()
+          setState((state) => ({ ...state, ws: null }))
+        }
       }
-    }, [])
+    }, [ws])
     useEffect(() => {
       if (ws) {
         ws.onmessage = ({ data }) => {
@@ -69,6 +77,11 @@ const WebSocketConnector: FC<{ url: string } & PropsWithChildren> =
     return (
       <WebSocketContext.Provider
         value={[
+          ws === null
+            ? 'closed'
+            : ws.readyState === ws.OPEN
+            ? 'open'
+            : 'connecting',
           (handler) => {
             setState((state) => {
               if (state.in_queue.length > 0) {

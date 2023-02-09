@@ -63,12 +63,13 @@ const TerminalScreen: FC<{
 }
 
 const TerminalInput: FC<{
+  value: string
   onSend?: (input: string) => void
   onChange?: (input: string) => void
+  onSuggest?: (input: string) => void
   focusOnLoad?: boolean
   autocomplete?: string
 }> = function TerminalInput(props) {
-  const [state, setState] = useState({ value: '' })
   const inRef = useRef<HTMLInputElement>()
   useEffect(() => {
     if (props.focusOnLoad) {
@@ -76,44 +77,36 @@ const TerminalInput: FC<{
     }
   }, [])
   return (
-    <div className='flex items-center bg-zinc-800'>
+    <div className='flex items-center bg-zinc-800 border-l border-zinc-900'>
       <div className='relative w-full'>
         <div className='absolute left-0 right-0 top-0 bottom-0 p-4 text-gray-300/40 font-mono overflow-hidden'>
           {props.autocomplete?.endsWith(':hidden') ? '' : props.autocomplete}
         </div>
         <input
-          value={state.value}
+          value={props.value}
           ref={inRef}
           className='w-full p-4 relative text-gray-300 bg-transparent outline-none font-mono z-10'
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault()
-              setState((state) => ({ ...state, value: '' }))
-              props.onSend?.call(null, state.value)
+              props.onSend?.call(null, props.value)
             } else if (e.key === 'Tab') {
               e.preventDefault()
-              if (props.autocomplete?.length > 0) {
-                let text = props.autocomplete
-                if (text.endsWith(':hidden')) {
-                  text = text.substring(0, text.length - 7)
-                }
-                setState(() => ({ ...state, value: text }))
-                props.onChange?.call(null, text)
+              if (props.value?.length > 0) {
+                props.onSuggest?.call(null, props.value)
               }
             }
           }}
           onChange={(e) => {
             props.onChange?.call(null, e.target.value)
-            setState((state) => ({ ...state, value: e.target.value }))
           }}
         />
       </div>
       <a
         className='p-4 text-zinc-700 hover:text-zinc-500 hover:cursor-pointer transition-colors'
         onClick={() => {
-          props.onSend?.call(null, state.value)
+          props.onSend?.call(null, props.value)
           inRef.current?.focus()
-          setState((state) => ({ ...state, value: '' }))
         }}
       >
         <FontAwesomeIcon icon='paper-plane' />
@@ -124,9 +117,11 @@ const TerminalInput: FC<{
 
 const Terminal: FC<{
   className?: string
+  value: string
   screen?: { className?: string; text: string; scrollOnChange?: boolean }
   onSend?: (input: string) => void
   onChange?: (input: string) => void
+  onSuggest?: (input: string) => void
   input?: {
     autocomplete?: string
     focusOnLoad: boolean
@@ -134,12 +129,26 @@ const Terminal: FC<{
 }> & {
   Input: typeof TerminalInput
   Screen: typeof TerminalScreen
-} = function Terminal({ className, screen, input, onSend, onChange }) {
+} = function Terminal({
+  className,
+  screen,
+  input,
+  onSend,
+  onChange,
+  onSuggest,
+  value,
+}) {
   const calcClassName = cx('flex', 'flex-col', className)
   return (
     <div className={calcClassName}>
       <TerminalScreen {...screen} />
-      <TerminalInput onSend={onSend} onChange={onChange} {...input} />
+      <TerminalInput
+        value={value}
+        onSend={onSend}
+        onChange={onChange}
+        onSuggest={onSuggest}
+        {...input}
+      />
     </div>
   )
 }

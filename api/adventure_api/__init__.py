@@ -9,7 +9,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.security.utils import get_authorization_scheme_param
 from pydantic import BaseModel
 from typing import Dict, Optional
-from .game import Character, CommandHandler, World
+from .game import Character, BasicCommands, CommandHandler, World, WorldCommands
 from .user import check_password, get_user, register_user
 from .setup import setup_database
 
@@ -95,7 +95,6 @@ async def play(ws: WebSocket, authorization=Header()):
         if loaded_character._id == user['id']:
             already_logged_in = True
     character: Optional[Character] = None
-    command_handler: Optional[CommandHandler] = None
     try:
         while True:
             data = await ws.receive_json()
@@ -103,16 +102,21 @@ async def play(ws: WebSocket, authorization=Header()):
                 ready = True
                 if not already_logged_in:
                     character = Character(user['id'], ws)
-                    command_handler = CommandHandler(character)
                     World.add_player(character)
                     await character.handle_login()
                 else:
                     await ws.send_json(dict(type='error', data='You are already logged in elsewhere.'))
-            elif ready and character and command_handler:
-                if data['type'] == 'autocomplete':
-                    await command_handler.handle_autocomplete_request(data['data'].split(' '))
+            elif ready and character:
+                if data['type'] == 'autocomplete_suggest':
+                    suggestion = character.command_handler.get_suggestion(
+                        data['data'].split(' '))
+                    await ws.send_json(dict(type='suggestion', data=suggestion))
+                elif data['type'] == 'autocomplete_get':
+                    suggestion = character.command_handler.get_suggestion(
+                        data['data'].split(' '), True)
+                    await ws.send_json(dict(type='autocomplete', data=suggestion))
                 elif data['type'] == 'game':
-                    await command_handler.handle_input(data['data'].split(' '))
+                    await character.command_handler.handle_input(data['data'].split(' '))
     except WebSocketDisconnect:
         pass
     except Exception as e:

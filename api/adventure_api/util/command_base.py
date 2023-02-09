@@ -2,7 +2,10 @@ import inspect
 import re
 import itertools
 from ..game import Character
-from typing import Callable, Dict, Tuple, TypeVar, List
+from typing import Callable, Dict, Optional, Tuple, TypeVar, List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..game.cell import Cell
 
 
 class InvalidCommandArgument(Exception):
@@ -188,3 +191,11 @@ class CommandHandlerBase:
 
     async def send_message(self: T, type: str, message: str, *args, **kwargs):
         return await self._character.send_message(type, message, *args, **kwargs)
+
+    @property
+    def char(self) -> Character:
+        return self._character
+
+    @property
+    def cell(self) -> Optional['Cell']:
+        return self._character._cell

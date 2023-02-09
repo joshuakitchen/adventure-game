@@ -6,7 +6,7 @@ import React, {
   useState,
 } from 'react'
 
-export type UserData = {}
+export type UserData = { id: string; email: string; is_admin: boolean }
 export type UserContextData = [UserData, (UserData) => void]
 
 const UserContext = createContext<UserContextData>(null)

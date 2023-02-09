@@ -1,3 +1,8 @@
 from .character import Character
-from .command import CommandHandler
+from .commands import (
+    BasicCommands,
+    CommandHandler,
+    IntroCommands,
+    WorldCommands
+)
 from .world import World

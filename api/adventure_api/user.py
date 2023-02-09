@@ -1,5 +1,4 @@
 from bcrypt import checkpw, hashpw, gensalt
-from fastapi import HTTPException
 from uuid import uuid4
 
 from .config import get_conn
