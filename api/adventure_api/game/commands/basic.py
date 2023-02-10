@@ -35,4 +35,5 @@ class BasicCommands:
 
     @autocomplete('command')
     def autocomplete_command(self, handler: CommandHandler, input: List[str]):
+        """Autocomplete command functions"""
         return [c["func"].__name__ for c in handler.get_command_list()]

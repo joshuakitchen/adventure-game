@@ -4,7 +4,7 @@
       "type": "python",
       "name": "API",
       "request": "launch",
-      "program": "${workspaceFolder}/api/main.py",
+      "program": "${workspaceFolder}/api/adventure_api/__main__.py",
       "cwd": "${workspaceFolder}/api",
       "console": "internalConsole",
       "env": {

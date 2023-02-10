@@ -1,7 +1,9 @@
+import asyncio
 import json
 import random
+from .enemy import Enemy
 from noise import snoise2
-from typing import Any, Dict, Optional, List, Tuple, TYPE_CHECKING
+from typing import Any, Dict, Optional, List, Tuple, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .character import Character
@@ -13,6 +15,10 @@ with open('./data/biomes.json', 'r') as f:
     BIOME_DATA: Dict[str, Any] = json.loads(f.read())
 
 
+MAX_ENEMIES = 4
+SPAWN_TICK = 60
+
+
 class Cell:
     """A cell is a location in the game which contains many things, a cell
     should cover a wide area such as a forest or village but villages and
@@ -22,13 +28,41 @@ class Cell:
     _biome: str
     _claimed_by: Optional[str]
     _characters: List['Character']
+    _enemies: List[Enemy]
+    _spawn_tick: int
 
     def __init__(self, x: int, z: int):
         self._x = x
         self._z = z
         self._characters = []
+        self._enemies = []
         self._claimed_by = None
+        self._spawn_tick = SPAWN_TICK
         self.load()
+        if 'enemies' in self.data:
+            for _ in range(random.randint(0, MAX_ENEMIES)):
+                if random.random() > 0.2:
+                    self.spawn(random.choice(self.data['enemies']))
+
+    async def tick(self):
+        if self._spawn_tick > 0:
+            self._spawn_tick = self._spawn_tick - 1
+        for c in self._characters:
+            await c.tick()
+        for e in self._enemies:
+            await e.tick()
+        if len(self._enemies) < MAX_ENEMIES and self._spawn_tick == 0:
+            if random.random() > 0.7:
+                e = self.spawn(random.choice(self.data['enemies']))
+                await self.send_message(
+                    'game', '@red@{}@res@ is wandering nearby.\n', e.name)
+            self._spawn_tick = SPAWN_TICK
+
+    async def send_message(self, type: str, message: str, *args, **kwargs):
+        await asyncio.gather(*[
+            c.send_message(type, message, args, kwargs)
+            for c in self._characters
+        ])
 
     def load(self):
         self.generate()
@@ -79,6 +113,49 @@ class Cell:
             return None
         return BIOME_DATA[self._biome]['scavenge']
 
+    def get(self, target_id: str) -> Optional[Union[Enemy, 'Character']]:
+        if target_id[-2:] == '00':
+            return next(
+                iter(
+                    [e for e in self._characters
+                     if e._instance_id == target_id]))
+        elif target_id[-2:] == '01':
+            return next(
+                iter(
+                    [e for e in self._enemies
+                     if e.id == target_id and not e.is_dead]),
+                None)
+        return None
+
+    def find(self, target: str) -> List[Enemy]:
+        """Attempts to find a target within the current cell, this can return
+        multiple targets which should then be reduced with an ordinal.
+
+        This should handle external names and convert them to internal names
+        too."""
+        targets: List[Enemy] = []
+        for e in self._enemies:
+            if e.name == target:
+                targets.append(e)
+        return targets
+
+    def spawn(self, enemy: str) -> Enemy:
+        """Spawns an enemy within the Cell."""
+        e = Enemy(self, enemy)
+        self._enemies.append(e)
+        return e
+
+    def remove(self, e: Enemy):
+        self._enemies.remove(e)
+
     @property
     def can_scavenge(self) -> bool:
         return self._get_scavenge_list is not None
+
+    @property
+    def get_entity_list(self) -> List[Enemy]:
+        return self._enemies
+
+    @property
+    def data(self) -> Dict[str, Any]:
+        return BIOME_DATA.get(self._biome, {})

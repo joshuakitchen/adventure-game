@@ -17,9 +17,9 @@ def get_conn() -> Any:
             os.environ.get('DB_FILE', ':memory:')))
     elif db_driver == 'postgres':
         conn = ('postgres', psycopg2.connect(
-            host=os.environ.get('DB_HOST'),
-            database=os.environ.get('DB_DATABASE'),
-            user=os.environ.get('DB_USER'),
+            host=os.environ.get('DB_HOST', 'localhost'),
+            database=os.environ.get('DB_DATABASE', 'pg'),
+            user=os.environ.get('DB_USER', 'postgres'),
             password=os.environ.get('DB_PASSWORD'),
             port=os.environ.get('DB_PORT', 5432),
             sslmode=os.environ.get('DB_SSLMODE', None)))

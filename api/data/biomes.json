@@ -1,8 +1,20 @@
 {
+  "plains": {
+    "scavenge": [
+      ["rock", {"shape": "smooth"}],
+      ["rock", {"shape": "pointy"}]
+    ],
+    "enemies": [
+      "rabbit"
+    ]
+  },
   "forest": {
     "scavenge": [
       ["rock", {"shape": "smooth"}],
       ["rock", {"shape": "pointy"}]
+    ],
+    "enemies": [
+      "rabbit"
     ]
   }
 }

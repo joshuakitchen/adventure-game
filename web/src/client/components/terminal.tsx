@@ -69,7 +69,15 @@ const TerminalInput: FC<{
   onSuggest?: (input: string) => void
   focusOnLoad?: boolean
   autocomplete?: string
+  useHistory?: boolean
 }> = function TerminalInput(props) {
+  const [state, setState] = useState<{
+    history: Array<string>
+    historyIndex: number
+  }>({
+    history: [],
+    historyIndex: -1,
+  })
   const inRef = useRef<HTMLInputElement>()
   useEffect(() => {
     if (props.focusOnLoad) {
@@ -90,11 +98,39 @@ const TerminalInput: FC<{
             if (e.key === 'Enter') {
               e.preventDefault()
               props.onSend?.call(null, props.value)
+              if (
+                props.useHistory &&
+                props.value !== state.history[state.history.length - 1]
+              ) {
+                setState((state) => ({
+                  ...state,
+                  history: [...state.history, props.value],
+                  historyIndex: -1,
+                }))
+              }
             } else if (e.key === 'Tab') {
               e.preventDefault()
               if (props.value?.length > 0) {
                 props.onSuggest?.call(null, props.value)
               }
+            } else if (e.key === 'ArrowUp' && state.history.length > 0) {
+              let idx = Math.max(
+                0,
+                state.historyIndex === -1
+                  ? state.history.length - 1
+                  : state.historyIndex - 1
+              )
+              props.onChange?.call(null, state.history[idx])
+              setState((state) => ({ ...state, historyIndex: idx }))
+            } else if (e.key === 'ArrowDown' && state.history.length > 0) {
+              let idx = Math.min(
+                state.history.length - 1,
+                state.historyIndex >= state.history.length
+                  ? 0
+                  : state.historyIndex + 1
+              )
+              props.onChange?.call(null, state.history[idx])
+              setState((state) => ({ ...state, historyIndex: idx }))
             }
           }}
           onChange={(e) => {
@@ -126,6 +162,7 @@ const Terminal: FC<{
     autocomplete?: string
     focusOnLoad: boolean
   }
+  useHistory?: boolean
 }> & {
   Input: typeof TerminalInput
   Screen: typeof TerminalScreen
@@ -137,6 +174,7 @@ const Terminal: FC<{
   onChange,
   onSuggest,
   value,
+  useHistory,
 }) {
   const calcClassName = cx('flex', 'flex-col', className)
   return (
@@ -147,6 +185,7 @@ const Terminal: FC<{
         onSend={onSend}
         onChange={onChange}
         onSuggest={onSuggest}
+        useHistory={useHistory}
         {...input}
       />
     </div>

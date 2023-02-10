@@ -17,8 +17,7 @@ class World:
         """Called each tick (600ms), applies different functions which could be
         useful in the game world."""
         for cell in cls._loaded_cells:
-            for character in cell._characters:
-                await character.tick()
+            await cell.tick()
 
     @classmethod
     def load_cell(cls, x: int, z: int, character: 'Character'):

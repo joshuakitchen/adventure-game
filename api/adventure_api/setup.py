@@ -1,4 +1,4 @@
-from .config import get_conn
+from config import get_conn
 
 
 def create_user_table():

@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from adventure_api.setup import get_conn, setup_database
+from setup import get_conn, setup_database
 
 parser = ArgumentParser(
     description='A command-line utility tool for managing the adventure game.')
@@ -14,7 +14,7 @@ db_parser.set_defaults(handler='db')
 user_parser = subparsers.add_parser(
     'users', help='Handles the user management.')
 user_parser.add_argument(
-    'action', choices=['list', 'set_admin', 'delete'],
+    'action', choices=['list', 'set_admin', 'reset'],
     help='The action to do on the users.')
 user_parser.add_argument(
     '-e',
@@ -26,6 +26,9 @@ user_parser.set_defaults(handler='users')
 if __name__ == '__main__':
     args = parser.parse_args()
     driver, conn = get_conn()
+    if 'handler' not in args:
+        parser.print_help()
+        exit(1)
     if args.handler == 'db':
         if args.action == 'flush':
             print('Are you sure you wish to do this action? [Y/n]')
@@ -64,7 +67,7 @@ if __name__ == '__main__':
             finally:
                 conn.close()
             print(f'Set {args.email} to an admin')
-        elif args.action == 'delete':
+        elif args.action == 'reset':
             if not args.email:
                 user_parser.print_help()
                 exit(1)

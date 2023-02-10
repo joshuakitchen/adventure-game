@@ -21,6 +21,7 @@ const GamePageInner = function GamePageInner() {
       chatInput,
       isReady,
       readyAttempts,
+      timeout,
     },
     setState,
   ] = useState({
@@ -31,13 +32,11 @@ const GamePageInner = function GamePageInner() {
     chatInput: '',
     isReady: false,
     readyAttempts: 0,
+    timeout: null,
   })
   const [socketState, addMessageHandler, sendMessage] = useWebSocket()
   useEffect(() => {
     addMessageHandler((message) => {
-      if (!isReady) {
-        setState((state) => ({ ...state, isReady: true, readyAttempts: 0 }))
-      }
       if (message.type === 'error') {
         if (message.data === 'Incorrect email or password') {
           window.location.href = '/logout'
@@ -52,6 +51,11 @@ const GamePageInner = function GamePageInner() {
         setState((state) => ({
           ...state,
           gameText: state.gameText + message.data,
+          chatText: !state.isReady
+            ? '\x1b[92mYou are connected to the global chat channel.\x1b[0m\n'
+            : state.chatText,
+          isReady: true,
+          readyAttempts: 0,
         }))
       } else if (message.type === 'suggestion') {
         setState((state) => ({ ...state, gameAutocomplete: message.data }))
@@ -75,10 +79,6 @@ const GamePageInner = function GamePageInner() {
     if (socketState === 'open' && !isReady) {
       if (readyAttempts === 0) {
         sendMessage({ type: 'ready' })
-      } else {
-        setTimeout(() => {
-          sendMessage({ type: 'ready' })
-        }, Math.min(readyAttempts * 500, 15000))
       }
     } else if (socketState === 'closed') {
       setState((state) => ({ ...state, isReady: false }))
@@ -148,6 +148,7 @@ const GamePageInner = function GamePageInner() {
           onSuggest={(input) => {
             sendMessage({ type: 'autocomplete_get', data: input })
           }}
+          useHistory
         />
       </div>
       <div className='w-96 flex-col border-l border-zinc-800 hidden lg:flex'>
@@ -157,9 +158,12 @@ const GamePageInner = function GamePageInner() {
         <Terminal
           value={chatInput}
           className='flex-1'
-          onChange={(text) => {}}
+          onChange={(text) => {
+            setState((state) => ({ ...state, chatInput: text }))
+          }}
           onSend={(message) => {
             sendMessage({ type: 'game', data: `say ${message}` })
+            setState((state) => ({ ...state, chatInput: '' }))
           }}
           screen={{
             text: chatText,

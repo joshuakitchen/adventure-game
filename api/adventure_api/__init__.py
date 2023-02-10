@@ -1,6 +1,7 @@
 import asyncio
 import threading
 import logging
+import shlex
 import time
 import jwt
 import re
@@ -10,9 +11,12 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.security.utils import get_authorization_scheme_param
 from pydantic import BaseModel
 from typing import Dict, Optional
-from .game import Character, BasicCommands, CommandHandler, World, WorldCommands
-from .user import check_password, get_user, register_user
-from .setup import setup_database
+from game import Character, BasicCommands, CommandHandler, World, WorldCommands
+from user import check_password, get_user, register_user
+from setup import setup_database
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 CLIENT_ID = os.environ['CLIENT_ID']
 CLIENT_SECRET = os.environ['CLIENT_SECRET']
@@ -105,16 +109,27 @@ async def play(ws: WebSocket, authorization=Header()):
                 else:
                     await ws.send_json(dict(type='error', data='You are already logged in elsewhere.'))
             elif ready and character:
+                try:
+                    command = shlex.split(data['data'])
+                except ValueError:
+                    command = data['data'].split(" ")
+                if len(data['data']) > 0 and data['data'].split(' ')[-1] == '':
+                    command.append('')
                 if data['type'] == 'autocomplete_suggest':
                     suggestion = character.command_handler.get_suggestion(
-                        data['data'].split(' '))
+                        command)
                     await ws.send_json(dict(type='suggestion', data=suggestion))
                 elif data['type'] == 'autocomplete_get':
                     suggestion = character.command_handler.get_suggestion(
-                        data['data'].split(' '), True)
+                        command,
+                        True)
                     await ws.send_json(dict(type='autocomplete', data=suggestion))
                 elif data['type'] == 'game':
-                    await character.command_handler.handle_input(data['data'].split(' '))
+                    logger.info(
+                        'handling command [%s] for [%s]',
+                        data['data'],
+                        character._name)
+                    await character.command_handler.handle_input(command)
     except WebSocketDisconnect:
         pass
     except Exception as e:
@@ -129,7 +144,7 @@ is_running = True
 
 
 async def loop():
-    logging.info('starting game loop')
+    logger.info('starting game loop')
     while is_running:
         try:
             now = time.perf_counter()
@@ -140,8 +155,9 @@ async def loop():
                 now = 600
             await asyncio.sleep((600 - now) / 1000)
         except Exception as e:
-            logging.error(f'error occurred in game loop {str(e)}')
-    logging.info('ending game loop')
+            logger.error(f'error occurred in game loop')
+            logger.exception(e)
+    logger.info('ending game loop')
 
 thread = threading.Thread(target=lambda: asyncio.run(loop()))
 

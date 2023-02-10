@@ -101,13 +101,21 @@ def command(f):
     return f
 
 
-def autocomplete(obj):
+def autocomplete(obj: str):
     """Wrapper for a function which designates the a category of items available
-    for autocompletion."""
+    for autocompletion.
+
+    :param obj: The object to handle autocompletion data for."""
     def _inner(f):
         setattr(f, '__autocomplete__', obj)
         return f
     return _inner
+
+
+def aliases(f):
+    """Wrapper for a function which provides aliases."""
+    setattr(f, '__alias__', True)
+    return f
 
 
 class CommandHandler:
@@ -142,14 +150,24 @@ class CommandHandler:
         if input[0].startswith('\\'):
             input[0] = input[0][1:]
             input = ['say'] + input
+        known_aliases = self._get_alias_handlers()
+        if input[0] in known_aliases:
+            input = known_aliases[input[0]].split(' ') + input[1:]
         if input[0] not in command_list:
-            return False
+            await self._character.send_message(
+                'game', '@red@Unable to find command@res@\n')
+            return
         try:
             handler, command_data = command_list[input[0]]
             arguments = self._build_initial_argument_list(command_data["func"])
             await command_data['func'](handler, *(arguments + input[1:]))
-        except TypeError:
-            print('Invalid command usage.')
+        except TypeError as e:
+            reg = re.compile(
+                f'{command_data["func"].__name__}\\(\\) takes (from )?\\d+ (to \\d )?positional arguments but \\d+ were given')
+            if reg.match(str(e)):
+                await self._character.send_message('game', '@red@Invalid command usage.@res@')
+            else:
+                raise
 
     def _build_initial_argument_list(self, func: Callable):
         """Builds a list of arguments which are first needed to be passed into
@@ -250,6 +268,17 @@ class CommandHandler:
             if getattr(v, '__autocomplete__', None) is not None and
             getattr(v, '__autocomplete__') in obj
         ]
+        return fns
+
+    def _get_alias_handlers(self):
+        """Returns a list of alias providers."""
+        fns = {
+            alias: cmd
+            for handler in self._handlers
+            for k, v in handler.__class__.__dict__.items()
+            if getattr(v, '__alias__', None)
+            for alias, cmd in v(handler)
+        }
         return fns
 
     def get_command_list(self):
