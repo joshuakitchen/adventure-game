@@ -10,7 +10,5 @@ RUN apk add --no-cache postgresql-libs && \
 
 COPY data data
 COPY adventure_api adventure_api
-COPY admin.py admin.py
-COPY main.py main.py
 
-CMD ["python", "main.py"]
+CMD ["python", "adventure_api"]
