@@ -50,11 +50,20 @@ class Enemy:
         return self._instance_id
 
     @property
+    def unique_number(self) -> int:
+        return int(self.id[:-2], 16)
+
+    @property
     def name(self) -> str:
         return self.data['name']
 
     @property
-    def state(self) -> str:
+    def description(self) -> str:
+        return self.data['description'][self.unique_number %
+                                        len(self.data['description'])]
+
+    @ property
+    def damage_state(self) -> str:
         perc = self._current_hp / self.data['hp']
         if perc == 1:
             return f'unharmed'
@@ -68,15 +77,15 @@ class Enemy:
             return 'like it\'s in a lot of pain'
         return 'like it\'s on it\'s last legs'
 
-    @property
+    @ property
     def data(self) -> Dict[str, Any]:
         return ENEMY_DATA[self._internal_name]
 
-    @property
+    @ property
     def is_dead(self) -> bool:
         return self._current_hp == 0
 
-    @property
+    @ property
     def target(self) -> Optional['Character']:
         if not self._target:
             return None

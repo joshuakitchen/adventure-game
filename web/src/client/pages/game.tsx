@@ -120,7 +120,10 @@ const GamePageInner = function GamePageInner() {
           value={gameInput}
           className='h-full'
           screen={{ text: gameText, scrollOnChange: true }}
-          input={{ autocomplete: gameAutocomplete, focusOnLoad: true }}
+          input={{
+            autocomplete: gameAutocomplete,
+            focusOnLoad: true,
+          }}
           onSend={(input) => {
             if (input.length > 0) {
               if (input.indexOf('clear') === 0 || input.indexOf('cls') === 0) {

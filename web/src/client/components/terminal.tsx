@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState, useRef } from 'react'
+import React, { FC, useEffect, useState, useRef, MutableRefObject } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import cx from 'classnames'
 
@@ -84,6 +84,9 @@ const TerminalInput: FC<{
       inRef.current?.focus()
     }
   }, [])
+  useEffect(() => {
+    inRef.current?.setSelectionRange(props.value.length, props.value.length)
+  }, [props.value])
   return (
     <div className='flex items-center bg-zinc-800 border-l border-zinc-900'>
       <div className='relative w-full'>
@@ -114,6 +117,7 @@ const TerminalInput: FC<{
                 props.onSuggest?.call(null, props.value)
               }
             } else if (e.key === 'ArrowUp' && state.history.length > 0) {
+              e.preventDefault()
               let idx = Math.max(
                 0,
                 state.historyIndex === -1
@@ -123,6 +127,7 @@ const TerminalInput: FC<{
               props.onChange?.call(null, state.history[idx])
               setState((state) => ({ ...state, historyIndex: idx }))
             } else if (e.key === 'ArrowDown' && state.history.length > 0) {
+              e.preventDefault()
               let idx = Math.min(
                 state.history.length - 1,
                 state.historyIndex >= state.history.length
@@ -161,6 +166,7 @@ const Terminal: FC<{
   input?: {
     autocomplete?: string
     focusOnLoad: boolean
+    ref?: MutableRefObject<HTMLInputElement>
   }
   useHistory?: boolean
 }> & {

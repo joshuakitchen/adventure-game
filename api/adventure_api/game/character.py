@@ -2,7 +2,7 @@ import json
 import random
 from fastapi import WebSocket
 from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
-from .commands import BasicCommands, ChatCommands, CombatCommands, CommandHandler, IntroCommands, WorldCommands
+from .commands import BasicCommands, ChatCommands, CombatCommands, CommandHandler, IntroCommands, ItemCommands, WorldCommands
 from .colors import replace_colors
 from .world import World
 from .item import Item
@@ -104,9 +104,11 @@ class Character:
         if self._action == 'scavenge':
             if random.random() > SCAVENGE_CHANCE:
                 item = self._cell.get_scavenge_item()
-                if item:
-                    self._inventory.append(item)
+                if self.add_item(*item):
                     await self.send_message('game', 'You find a @yel@{}@res@\n', Item.get_display_name(item))
+                else:
+                    await self.send_message('game', 'Unable to add item, your inventory is full.\n')
+                    self._action = None
             self._action_timer = SCAVENGE_TIMER
         elif self._action == 'attack':
             target = self.target
@@ -115,7 +117,7 @@ class Character:
                 return
             hit = max(1, self.max_hit)
             target.damage(self._instance_id, 1)
-            await self.send_message('game', 'You hit the @red@{}@res@ for @red@{}@res@ damage, it looks {}\n', target.name, hit, target.state)
+            await self.send_message('game', 'You hit the @red@{}@res@ for @red@{}@res@ damage, it looks {}\n', target.name, hit, target.damage_state)
             if target.is_dead:
                 await self.send_message('game', 'You kill the @red@{}@res@\n', target.name)
                 self._target = None
@@ -129,7 +131,7 @@ class Character:
         if not e:
             return
         self._hp = max(0, self._hp - damage)
-        await self.send_message('game', 'You take @red@{}@res@ damage from @red@{}@res@, you\'re now on {}/{}\n', damage, e.name, self._hp, self._attributes['constitution'][0])
+        await self.send_message('game', 'You take @red@{}@res@ damage from @red@{}@res@, you\'re now on {}/{} hp.\n', damage, e.name, self._hp, self._attributes['constitution'][0])
 
     async def set_action(self, action: Optional[str]):
         """Sets the players current action, if the action is currently set then
@@ -181,11 +183,13 @@ class Character:
             self._command_handler.remove_command_handler(WorldCommands)
             self._command_handler.remove_command_handler(ChatCommands)
             self._command_handler.remove_command_handler(CombatCommands)
+            self._command_handler.remove_command_handler(ItemCommands)
         self._state = state
         if self._state == 'adventure':
             self._command_handler.add_command_handler(WorldCommands())
             self._command_handler.add_command_handler(ChatCommands())
             self._command_handler.add_command_handler(CombatCommands())
+            self._command_handler.add_command_handler(ItemCommands())
         elif self._state == 'intro':
             self._command_handler.add_command_handler(IntroCommands())
 
@@ -198,9 +202,22 @@ class Character:
         self._target = target_id
         await self.set_action('attack')
 
+    def add_item(self, item_id: str, qualifiers: Dict[str, Any]) -> bool:
+        """"""
+        item = Item.get_item_properties((item_id, qualifiers,))
+        if self.free_slots - item['slots_taken'] < 0:
+            return False
+        self._inventory.append((item_id, qualifiers))
+        return True
+
+    def remove_item_at(self, slot: int):
+        if slot >= len(self._inventory):
+            return
+        del self._inventory[slot]
+
     def to_json(self) -> str:
         """Converts the character to JSON for saving."""
-        return json.dumps(dict())
+        return json.dumps(dict(inventory=self._inventory))
 
     def from_json(self, raw_data: Tuple[str, int, int, str, str]):
         """Converts the character back from JSON for loading.
@@ -211,6 +228,7 @@ class Character:
         self._z = raw_data[2]
         self._state = raw_data[3]
         data: Dict[str, Any] = json.loads(raw_data[4])
+        self._inventory = data.get('inventory', [])
 
     def load_character(self):
         """Loads the character using the current database driver."""
@@ -264,4 +282,4 @@ class Character:
 
     @ property
     def free_slots(self):
-        return 5
+        return 5 - sum([i['slots_taken'] for i in self.inventory])

@@ -11,7 +11,8 @@
   "forest": {
     "scavenge": [
       ["rock", {"shape": "smooth"}],
-      ["rock", {"shape": "pointy"}]
+      ["rock", {"shape": "pointy"}],
+      ["stick", {"material": "oak"}]
     ],
     "enemies": [
       "rabbit"

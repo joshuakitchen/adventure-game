@@ -108,7 +108,7 @@ class WorldCommands:
             target = targets[ordinal_int]
         except IndexError:
             await c.send_message('game', '@red@Target could not be found.@res@\n')
-        print('hi')
+        await c.send_message('game', '{} It looks {}.\n', target.description, target.damage_state)
 
     @autocomplete('direction')
     def autocomplete_direction(self, c: 'Character',

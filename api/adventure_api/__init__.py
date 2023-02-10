@@ -133,6 +133,7 @@ async def play(ws: WebSocket, authorization=Header()):
     except WebSocketDisconnect:
         pass
     except Exception as e:
+        await ws.send_json(dict(type='error', data='An internal error has occurred.'))
         logging.exception(e)
         await ws.close()
     finally:

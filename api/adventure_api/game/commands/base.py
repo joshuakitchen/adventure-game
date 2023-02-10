@@ -2,6 +2,7 @@ import functools
 import itertools
 import inspect
 import re
+from collections import OrderedDict
 from typing import Any, Callable, Iterable, List, Type, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -164,8 +165,11 @@ class CommandHandler:
         except TypeError as e:
             reg = re.compile(
                 f'{command_data["func"].__name__}\\(\\) takes (from )?\\d+ (to \\d )?positional arguments but \\d+ were given')
-            if reg.match(str(e)):
-                await self._character.send_message('game', '@red@Invalid command usage.@res@')
+            ureg = re.compile(
+                f'{command_data["func"].__name__}\\(\\) missing \\d+ required positional argument: \'.+\''
+            )
+            if reg.match(str(e)) or ureg.match(str(e)):
+                await self._character.send_message('game', '@red@Invalid command usage.@res@\n')
             else:
                 raise
 
@@ -228,16 +232,26 @@ class CommandHandler:
         suggestion_funcs = self._get_autocomplete_handlers(
             params
             [len(cmd) - 2])
+        raw_suggestion_list: List[str] = []
         suggestion_list: List[str] = []
         for handler, suggestion_func in suggestion_funcs:
             base_arguments = self._build_initial_argument_list(suggestion_func)
-            suggestion_list.extend(
+            raw_suggestion_list.extend(
                 suggestion_func(
                     handler, *(base_arguments + [cmd])))
+            if alternative:
+                suggestion_list = [
+                    s[1: -1]
+                    if len(s) > 2 and s[0] == '"' and s[-1] == '"' else s
+                    for s in raw_suggestion_list]
+            else:
+                suggestion_list = raw_suggestion_list
+        raw_suggestion_list = list(OrderedDict.fromkeys(raw_suggestion_list))
+        suggestion_list = list(OrderedDict.fromkeys(suggestion_list))
         if cmd[-1] not in suggestion_list:
             matching_suggestions = next((
                 suggestion
-                for suggestion in suggestion_list
+                for suggestion in raw_suggestion_list
                 if suggestion.startswith(cmd[-1])
             ), '')
             return ' '.join(cmd[:-1]) + ' ' + matching_suggestions
@@ -246,7 +260,7 @@ class CommandHandler:
         idx = suggestion_list.index(cmd[-1]) + 1
         if idx == len(suggestion_list):
             idx = 0
-        return ' '.join(cmd[:-1]) + ' ' + suggestion_list[idx]
+        return ' '.join(cmd[:-1]) + ' ' + raw_suggestion_list[idx]
 
     def _get_command_list_internal(self):
         """Returns the list of commands from all command handlers along with the
