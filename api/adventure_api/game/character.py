@@ -117,7 +117,7 @@ class Character:
             target.damage(self._instance_id, 1)
             await self.send_message('game', 'You hit the @red@{}@res@ for @red@{}@res@ damage, it looks {}\n', target.name, hit, target.state)
             if target.is_dead:
-                await self.send_message('game', 'You kill the @red@{}@res@', target.name)
+                await self.send_message('game', 'You kill the @red@{}@res@\n', target.name)
                 self._target = None
                 self._action = None
             self._action_timer = 3
