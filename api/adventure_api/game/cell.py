@@ -60,7 +60,7 @@ class Cell:
 
     async def send_message(self, type: str, message: str, *args, **kwargs):
         await asyncio.gather(*[
-            c.send_message(type, message, args, kwargs)
+            c.send_message(type, message, *args, **kwargs)
             for c in self._characters
         ])
 
