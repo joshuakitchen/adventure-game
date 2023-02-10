@@ -104,6 +104,9 @@ async def play(ws: WebSocket, authorization=Header()):
                 ready = True
                 if not already_logged_in:
                     character = Character(user['id'], ws)
+                    if character.name:
+                        await World.send_to_all(
+                            'chat', '@lgr@{}@res@ has just logged in.\n', character.name)
                     World.add_player(character)
                     await character.handle_login()
                 else:
