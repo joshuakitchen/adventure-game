@@ -19,19 +19,27 @@ class WorldCommands:
         """Surveying maps the immediate surrounding area and shows it the player.
 
         :command_summary: Maps the surrounding area."""
-        minimap = ""
+        biome_map = ''
+        population_map = ''
 
         for z in range(5):
             for x in range(9):
                 cx = c._x + x - 4
                 cz = c._z + z - 2
+                l_cell = World.get_cell(cx, cz)
+                population_map = population_map + l_cell.population_icon
                 if cx == c._x and cz == c._z:
-                    minimap = minimap + '@lre@@@res@'
+                    biome_map = biome_map + '@lre@@@res@'
                 else:
-                    minimap = minimap + World.get_cell(cx, cz).get_icon()
-            minimap = minimap + '\n'
-        entity_names: List[str] = [f'@red@{e.name}@res@' for e in cell._enemies]
-        await c.send_message('game', 'You survey the surrounding area.\n{}\nYou can see:\n{}\n', minimap, '\n'.join(entity_names))
+                    biome_map = biome_map + l_cell.biome_icon
+            biome_map = biome_map + '\n'
+            population_map = population_map + '\n'
+        map_display = ''
+        for bm, pm in zip(biome_map.split('\n'), population_map.split('\n')):
+            map_display = map_display + bm + ' ' + pm + '\n'
+        entity_names: List[str] = [f'@lgr@{e.name}@res@' for e in cell.characters if e is not c] + \
+            [f'@red@{e.name}@res@' for e in cell.enemies]
+        await c.send_message('game', 'You survey the surrounding area.\nMap:      Pop.:\n{}You can see:\n{}\n', map_display, '\n'.join(entity_names))
 
     @command
     async def scavenge(self, character: 'Character'):
@@ -79,7 +87,7 @@ class WorldCommands:
         elif direction == 'south':
             c._z = c._z + 1
         World.unload_cell(ox, oz, c)
-        World.load_cell(c._x, c._z, c)
+        c._cell = World.load_cell(c._x, c._z, c)
         c._target = None
         await self.survey(c, c._cell)
 
@@ -88,7 +96,8 @@ class WorldCommands:
         """Inspects the given target.
 
         :command_summary: Inspects the given target.
-        :command_param_type: target"""
+        :command_param_type target: target
+        :command_param_type ordinal: target_ordinal"""
         if ordinal is not None:
             try:
                 ordinal_int = int(ordinal) - 1

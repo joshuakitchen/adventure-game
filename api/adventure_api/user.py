@@ -38,8 +38,8 @@ def register_user(email: str, password: str):
     db_driver, conn = get_conn()
     if db_driver == 'sqlite':
         try:
-            conn.execute('INSERT INTO users VALUES (?, ?, ?)', [str(uuid4()), email, hashpw(
-                password.encode('utf-8'), gensalt()).decode('utf-8')])
+            conn.execute('INSERT INTO users (id, email, password) VALUES (?, ?, ?)', [str(
+                uuid4()), email, hashpw(password.encode('utf-8'), gensalt()).decode('utf-8')])
             conn.commit()
         finally:
             conn.close()

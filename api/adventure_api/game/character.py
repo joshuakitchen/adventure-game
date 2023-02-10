@@ -72,6 +72,7 @@ class Character:
             magic=(1, 1),
             dexterity=(1, 1)
         )
+        self._skills = dict()
         self._command_handler = CommandHandler(self)
         self._command_handler.add_command_handler(BasicCommands())
         self.load_character()
@@ -124,14 +125,27 @@ class Character:
                 self._action = None
             self._action_timer = 3
 
-    async def damage(self, enemy_id: str, damage: int):
+    async def damage(self, enemy_id: str, damage: int) -> bool:
         if not self._cell:
-            return
+            return False
         e = self._cell.get(enemy_id)
         if not e:
-            return
+            return False
         self._hp = max(0, self._hp - damage)
         await self.send_message('game', 'You take @red@{}@res@ damage from @red@{}@res@, you\'re now on {}/{} hp.\n', damage, e.name, self._hp, self._attributes['constitution'][0])
+        if self._hp <= 0:
+            await self.on_dead()
+            return True
+        return False
+
+    async def on_dead(self):
+        await self.send_message('game', 'Oh dear, you have died!\n')
+        self._inventory = []
+        self._hp = self._attributes['constitution'][0]
+        self._target = None
+        self._action = None
+        self._action_timer = 0
+        self.move(0, 0)
 
     async def set_action(self, action: Optional[str]):
         """Sets the players current action, if the action is currently set then
@@ -215,6 +229,17 @@ class Character:
             return
         del self._inventory[slot]
 
+    def move(self, x: int, z: int):
+        """Moves to the specified cell.
+
+        :param x: The x coordinate.
+        :param z: The z coordinate."""
+        ox, oz = self._x, self._z
+        self._x = x
+        self._z = z
+        World.unload_cell(ox, oz, self)
+        self._cell = World.load_cell(x, z, self)
+
     def to_json(self) -> str:
         """Converts the character to JSON for saving."""
         return json.dumps(dict(inventory=self._inventory))
@@ -234,7 +259,19 @@ class Character:
         """Loads the character using the current database driver."""
         driver, conn = get_conn()
         if driver == 'sqlite':
-            pass  # TODO: implement the sqlite driver
+            try:
+                cur = conn.cursor()
+                try:
+                    cur.execute(
+                        'SELECT name, x, z, state, additional_data FROM users WHERE id = ?', [
+                            self._id])
+                    data = cur.fetchone()
+                    if data:
+                        self.from_json(data)
+                finally:
+                    cur.close()
+            finally:
+                conn.close()
         elif driver == 'postgres':
             with conn.cursor() as cur:
                 cur.execute(
@@ -248,7 +285,13 @@ class Character:
         """Saves the character using the current database driver."""
         driver, conn = get_conn()
         if driver == 'sqlite':
-            pass  # TODO: implement the sqlite driver
+            try:
+                conn.execute(
+                    'UPDATE USERS SET name = ?, x = ?, z = ?, state = ?, additional_data = ? WHERE id = ?', [
+                        self._name, self._x, self._z, self._state, self.to_json(), self._id])
+                conn.commit()
+            finally:
+                conn.close()
         elif driver == 'postgres':
             with conn.cursor() as cur:
                 cur.execute(
@@ -256,13 +299,19 @@ class Character:
                         self._name, self._x, self._z, self._state, self.to_json(), self._id])
                 conn.commit()
 
+    def get_skill_level(self, name: str) -> int:
+        return self._skills.get(name, (1, 0))[0]
+
     @property
     def name(self):
         return self._name
 
     @property
     def max_hit(self):
-        return 1
+        strength_level = self._attributes['strength'][0]
+        skill_level = self.get_skill_level('barehanded')
+        a = pow(strength_level, 0.3) + pow(skill_level, 0.3)
+        return int(a * ((0 + 16) / 32))
 
     @property
     def target(self):

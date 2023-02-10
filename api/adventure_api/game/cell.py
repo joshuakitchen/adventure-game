@@ -91,7 +91,8 @@ class Cell:
             else:
                 self._biome = 'plains'
 
-    def get_icon(self):
+    @property
+    def biome_icon(self):
         if self._biome == 'forest':
             return '\x1b[32m"\uFE0E\x1b[0m'
         elif self._biome == 'mountain':
@@ -99,6 +100,18 @@ class Cell:
         elif self._biome == 'plains':
             return '\x1b[32m.\x1b[0m'
         return '\x1b[34m~\x1b[0m'
+
+    @property
+    def population_icon(self):
+        if len(self._characters) >= 20:
+            return '█'
+        elif len(self._characters) >= 10:
+            return '▓'
+        elif len(self._characters) >= 5:
+            return '▒'
+        elif len(self._characters) >= 1:
+            return '░'
+        return '.'
 
     def get_scavenge_item(self) -> Optional[Tuple[str, Dict[str, str]]]:
         scavenge_list = self._get_scavenge_list()
@@ -153,7 +166,15 @@ class Cell:
         return self._get_scavenge_list is not None
 
     @property
-    def get_entity_list(self) -> List[Enemy]:
+    def entities(self) -> List[Union['Character',Enemy]]:
+        return self._characters + self._enemies
+
+    @property
+    def characters(self) -> List['Character']:
+        return self._characters
+
+    @property
+    def enemies(self) -> List[Enemy]:
         return self._enemies
 
     @property

@@ -16,9 +16,15 @@ class BasicCommands:
         :command_summary: Lists the functions or brings up help for a specific page.
         :command_param_type page: page,command
         """
+        cmds = [
+            (f'{c["func"].__name__} {" ".join(c["doc_param"])}', c['summary'])
+            for c in handler.get_command_list()
+        ]
+        max_len = max([len(c[0]) for c in cmds])
+        cmds = [(c[0].ljust(max_len, ' '), c[1]) for c in cmds]
         commands = [
-            f'{c["func"].__name__} {" ".join(c["doc_param"])} - {c["summary"]}'
-            for c in handler.get_command_list()]
+            f'{c[0]} - {c[1]}'
+            for c in cmds]
         command_str = '\n'.join(commands)
         await character.send_message('game', '{}\n', command_str)
 

@@ -35,7 +35,9 @@ class Enemy:
         if self.target is None:
             self._target = None
             return
-        await self.target.damage(self.id, 1)
+        is_dead = await self.target.damage(self.id, 1)
+        if is_dead:
+            self._target = None
         self._timer = self.data['attack_timer']
 
     def damage(self, enemy_id: str, damage: int):
