@@ -9,9 +9,19 @@ def get_db_driver() -> str:
 
 
 def get_conn() -> Any:
-    if getattr(get_conn, 'connection', None):
-        return getattr(get_conn, 'connection')
     db_driver = get_db_driver()
+    if getattr(get_conn, 'connection', None):
+        conn = getattr(get_conn, 'connection')
+        # Check if the connection is still open
+        if db_driver == 'postgres':
+            try:
+                cur = conn[1].cursor()
+                cur.execute('SELECT 1')
+            except (psycopg2.OperationalError, psycopg2.InterfaceError):
+                setattr(get_conn, 'connection', None)
+                return get_conn()
+
+        return conn
     if db_driver == 'sqlite':
         return ('sqlite', sqlite3.connect(
             os.environ.get('DB_FILE', ':memory:')))

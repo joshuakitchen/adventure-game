@@ -20,5 +20,6 @@
     "python.formatting.autopep8Args": ["--max-line-length", "80", "--experimental", "-a"],
     "python.analysis.typeCheckingMode": "off",
     "python.analysis.importFormat": "relative",
-    "python.analysis.inlayHints.variableTypes": false
+    "python.analysis.inlayHints.variableTypes": false,
+    
 }

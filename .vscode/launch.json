@@ -1,34 +1,31 @@
 {
   "configurations": [
     {
-      "type": "python",
+      "type": "debugpy",
       "name": "API",
       "request": "launch",
       "program": "${workspaceFolder}/api/adventure_api/__main__.py",
       "cwd": "${workspaceFolder}/api",
       "console": "internalConsole",
+      "envFile": "${workspaceFolder}/.env.dev",
       "env": {
         "DB_DRIVER": "postgres",
         "DB_HOST": "localhost",
         "DB_USER": "postgres",
-        "DB_PASSWORD": "postgres",
         "DB_DATABASE": "pg",
-        "CLIENT_ID": "4752871f-71c5-4940-8c1e-bee3be614c63",
-        "CLIENT_SECRET": "0f2321742fc62e3390e9b1d2161be5665652a1c9e1bb781f012edf8",
         "DEBUG": "true"
       }
     },
     {
-      "type": "python",
+      "type": "debugpy",
       "name": "API SQLite",
       "request": "launch",
       "program": "${workspaceFolder}/api/adventure_api/__main__.py",
       "cwd": "${workspaceFolder}/api",
       "console": "internalConsole",
+      "envFile": "${workspaceFolder}/.env.dev",
       "env": {
         "DB_FILE": "./data/adventure.db",
-        "CLIENT_ID": "4752871f-71c5-4940-8c1e-bee3be614c63",
-        "CLIENT_SECRET": "0f2321742fc62e3390e9b1d2161be5665652a1c9e1bb781f012edf8",
         "DEBUG": "true"
       }
     },
@@ -47,10 +44,7 @@
       ],
       "console": "internalConsole",
       "outputCapture": "std",
-      "env": {
-        "CLIENT_ID": "4752871f-71c5-4940-8c1e-bee3be614c63",
-        "CLIENT_SECRET": "0f2321742fc62e3390e9b1d2161be5665652a1c9e1bb781f012edf8"
-      }
+      "envFile": "${workspaceFolder}/.env.dev"
     }
   ]
 }
