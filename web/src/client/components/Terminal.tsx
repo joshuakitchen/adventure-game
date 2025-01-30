@@ -90,6 +90,7 @@ export const TerminalInput: Component<{
             }}
             onTouchEnd={(e) => {
               e.preventDefault()
+              setMode((mode() + 1) % props.modes.length)
             }}
           >
             <FontAwesomeIcon icon={item.icon} />
@@ -140,6 +141,13 @@ export const TerminalInput: Component<{
           }}
           onTouchEnd={(e) => {
             e.preventDefault()
+            if (inRef.value === '') {
+              return
+            }
+            props.onSuggest?.call(null, inRef.value, mode())
+            if (inRef) {
+              inRef.focus()
+            }
           }}
         >
           <FontAwesomeIcon className='fa-fw' icon='chevron-right' />
@@ -158,6 +166,13 @@ export const TerminalInput: Component<{
         }}
         onTouchEnd={(e) => {
           e.preventDefault()
+          if (inRef.value === '') {
+            return
+          }
+          props.onSend?.call(null, inRef.value, mode())
+          if (inRef) {
+            inRef.focus()
+          }
         }}
       >
         <FontAwesomeIcon className='fa-fw' icon='paper-plane' />
