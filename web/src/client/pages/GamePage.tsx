@@ -97,6 +97,8 @@ export const GamePage: Component = () => {
         }
       } else if (message.type === 'chat') {
         sendChatText(message.data)
+      } else if (message.type === 'pong') {
+        setPingSent(false)
       }
     }
     ws.onclose = () => {
@@ -141,6 +143,9 @@ export const GamePage: Component = () => {
       if (connectInterval() === null) {
         setConnectInterval(
           setInterval(() => {
+            if (connecting()) {
+              return
+            }
             openWebSocket()
           }, 1000 * Math.min(30, Math.pow(2, retries())))
         )
