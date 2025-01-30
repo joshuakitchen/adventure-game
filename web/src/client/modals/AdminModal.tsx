@@ -22,12 +22,16 @@ export const AdminModal: Component<{
   return (
     <Show when={props.visible}>
       <Portal mount={document.getElementById('modal-container')}>
-        <div class='fixed w-screen h-screen bg-black/60 font-mono'>
-          <div class='fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[720px] h-1/2 flex flex-col text-gray-300 bg-zinc-900 shadow-md'>
+        <div class='fixed left-0 top-0 w-screen h-screen bg-black/60 font-mono pointer-events-auto z-1000'>
+          <div class='fixed w-full h-full md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[720px] md:h-1/2 flex flex-col text-gray-300 bg-zinc-900 shadow-md rounded-md'>
             <div class='flex'>
-              <a class='p-4 flex-1 bg-zinc-800'>
+              <a class='p-4 flex-1 bg-zinc-800 rounded-tl-md hover:bg-zinc-700 cursor-pointer'>
                 <FontAwesomeIcon icon='users' className='pr-4' />
                 Users
+              </a>
+              <a class='p-4 flex-1 bg-zinc-800 rounded-tr-md hover:bg-zinc-700 cursor-pointer'>
+                <FontAwesomeIcon icon='cog' className='pr-4' />
+                Settings
               </a>
             </div>
             <div class='flex-1'>
@@ -50,14 +54,16 @@ export const AdminModal: Component<{
                 </tbody>
               </table>
             </div>
-            <button
-              class='p-4 bg-zinc-800'
-              onClick={() => {
-                props.onClose()
-              }}
-            >
-              Close
-            </button>
+            <div class='grid grid-cols-4 gap-8'>
+              <button
+                class='p-4 bg-zinc-800 cursor-pointer [grid-column:4]'
+                onClick={() => {
+                  props.onClose()
+                }}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       </Portal>

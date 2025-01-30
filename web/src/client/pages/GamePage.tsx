@@ -87,6 +87,19 @@ export const GamePage: Component = () => {
           <a class='p-4 transition-colors hover:bg-zinc-700' href='#'>
             <FontAwesomeIcon className='fa-fw' icon='bug' />
           </a>
+          <div class='w-full' />
+          <Show when={user.is_admin}>
+            <a
+              class='md:mt-auto p-4 transition-colors hover:bg-zinc-700'
+              href='#'
+              onClick={(e) => {
+                e.preventDefault()
+                setAdminModal(true)
+              }}
+            >
+              <FontAwesomeIcon className='fa-fw' icon='cog' />
+            </a>
+          </Show>
           <a
             class='p-4 transition-colors hover:bg-zinc-700 hover:cursor-pointer'
             onClick={(e) => {
@@ -103,18 +116,6 @@ export const GamePage: Component = () => {
           >
             <FontAwesomeIcon className='fa-fw' icon='sign-out' />
           </a>
-          <Show when={user.is_admin}>
-            <a
-              class='mt-auto p-4 transition-colors hover:bg-zinc-700'
-              href='#'
-              onClick={(e) => {
-                e.preventDefault()
-                setAdminModal(true)
-              }}
-            >
-              <FontAwesomeIcon className='fa-fw' icon='cog' />
-            </a>
-          </Show>
         </nav>
         <div class='flex-1 h-1 md:h-auto'>
           <Terminal
