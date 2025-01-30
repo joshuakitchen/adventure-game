@@ -21,5 +21,11 @@
     "python.analysis.typeCheckingMode": "off",
     "python.analysis.importFormat": "relative",
     "python.analysis.inlayHints.variableTypes": false,
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/api/adventure_api"
+    ],
+    "python.autoComplete.extraPaths": [
+        "${workpsaceFolder}/api/adventure_api"
+    ]
     
 }

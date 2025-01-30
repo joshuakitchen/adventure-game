@@ -2,12 +2,13 @@ import json
 import random
 from fastapi import WebSocket
 from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
-from .commands import BasicCommands, ChatCommands, CombatCommands, CommandHandler, IntroCommands, ItemCommands, WorldCommands
+
+from .commands import BasicCommands, CharacterCommands, ChatCommands, CombatCommands, CommandHandler, IntroCommands, ItemCommands, WorldCommands
 from .colors import replace_colors
 from .world import World
 from .item import Item
 from config import get_conn
-from util import generate_id
+from util import generate_id, EXP_TABLE
 
 if TYPE_CHECKING:
     from .cell import Cell
@@ -67,10 +68,10 @@ class Character:
         self._cell = None
         self._hp = 10
         self._attributes = dict(
-            constitution=(10, 1),
-            strength=(1, 1),
-            magic=(1, 1),
-            dexterity=(1, 1)
+            constitution=[10, 1],
+            strength=[1, 1],
+            magic=[1, 1],
+            dexterity=[1, 1]
         )
         self._skills = dict()
         self._command_handler = CommandHandler(self)
@@ -116,11 +117,33 @@ class Character:
             if target is None:
                 self._target = None
                 return
-            hit = max(1, self.max_hit)
-            target.damage(self._instance_id, 1)
-            await self.send_message('game', 'You hit the @red@{}@res@ for @red@{}@res@ damage, it looks {}\n', target.name, hit, target.damage_state)
+            hit = random.randint(1, self.max_hit)
+            target.damage(self._instance_id, hit)
+
+            xp_gain = 2 * hit
+
+            if not 'barehanded' in self._skills:
+                level = 0
+                while xp_gain >= EXP_TABLE[level]:
+                    xp_gain -= EXP_TABLE[level]
+                    level += 1
+                self._skills['barehanded'] = [level + 1, xp_gain]
+                await self.send_message('game', 'You begin to learn the art of barehanded combat.')
+            else:
+                level, xp = self._skills['barehanded']
+                if level < 100:
+                    xp += xp_gain
+                    level_gained = False
+                    while xp >= EXP_TABLE[level - 1]:
+                        level += 1
+                        level_gained = True
+                    if level_gained:
+                        await self.send_message('game', 'You have gained a level in barehanded combat.\n')
+                    self._skills['barehanded'] = (level, xp)
+
+            await self.send_message('game', 'You hit the @red@{}@res@ for @red@{}@res@ damage, it looks {}', target.name, hit, target.damage_state)
             if target.is_dead:
-                await self.send_message('game', 'You kill the @red@{}@res@\n', target.name)
+                await self.send_message('game', 'You kill the @red@{}@res@', target.name)
                 self._target = None
                 self._action = None
             self._action_timer = 3
@@ -194,12 +217,14 @@ class Character:
         if self._state == 'intro':
             self._command_handler.remove_command_handler(IntroCommands)
         elif self._state == 'adventure':
+            self._command_handler.remove_command_handler(CharacterCommands)
             self._command_handler.remove_command_handler(WorldCommands)
             self._command_handler.remove_command_handler(ChatCommands)
             self._command_handler.remove_command_handler(CombatCommands)
             self._command_handler.remove_command_handler(ItemCommands)
         self._state = state
         if self._state == 'adventure':
+            self._command_handler.add_command_handler(CharacterCommands())
             self._command_handler.add_command_handler(WorldCommands())
             self._command_handler.add_command_handler(ChatCommands())
             self._command_handler.add_command_handler(CombatCommands())
@@ -242,7 +267,7 @@ class Character:
 
     def to_json(self) -> str:
         """Converts the character to JSON for saving."""
-        return json.dumps(dict(inventory=self._inventory))
+        return json.dumps(dict(hp=self._hp, inventory=self._inventory, attributes=self._attributes, skills=self._skills, action_timer=self._action_timer))
 
     def from_json(self, raw_data: Tuple[str, int, int, str, str]):
         """Converts the character back from JSON for loading.
@@ -253,7 +278,11 @@ class Character:
         self._z = raw_data[2]
         self._state = raw_data[3]
         data: Dict[str, Any] = json.loads(raw_data[4])
+        self._hp = data.get('hp', self._hp)
         self._inventory = data.get('inventory', [])
+        self._attributes = data.get('attributes', self._attributes)
+        self._skills = data.get('skills', self._skills)
+        self._action_timer = data.get('action_timer', self._action_timer)
 
     def load_character(self):
         """Loads the character using the current database driver."""
@@ -303,15 +332,23 @@ class Character:
         return self._skills.get(name, (1, 0))[0]
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
+    
+    @property
+    def faction(self) -> str:
+        return 'Independent'
 
     @property
     def max_hit(self):
         strength_level = self._attributes['strength'][0]
         skill_level = self.get_skill_level('barehanded')
-        a = pow(strength_level, 0.3) + pow(skill_level, 0.3)
-        return int(a * ((0 + 16) / 32))
+
+        a = (strength_level + skill_level) / 4.0
+        if a < 1:
+            a = 1
+
+        return int(a)
 
     @property
     def target(self):

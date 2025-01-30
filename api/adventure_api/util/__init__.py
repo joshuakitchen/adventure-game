@@ -15,3 +15,5 @@ def generate_id(e_type: int) -> str:
         hex(_id_ord)[2:].rjust(2, '0')[:4],
         hex(e_type)[2:].rjust(2, '0')[:2]
     ])
+
+from .xp import EXP_TABLE
