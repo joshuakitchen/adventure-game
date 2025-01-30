@@ -147,6 +147,8 @@ class CommandHandler:
 
     async def handle_input(self, input: List[str]):
         """Invokes a command for the given input string."""
+        if not input:
+            return
         command_list = self._get_command_list_internal()
         if input[0].startswith('\\'):
             input[0] = input[0][1:]

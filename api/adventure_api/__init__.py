@@ -114,7 +114,6 @@ async def play(ws: WebSocket):
     try:
         while True:
             data = await ws.receive_json()
-            logger.info(data)
             if data['type'] == 'ready' and not ready:
                 ready = True
                 if not already_logged_in:
@@ -126,6 +125,8 @@ async def play(ws: WebSocket):
                     await character.handle_login()
                 else:
                     await ws.send_json(dict(type='error', data='You are already logged in elsewhere.'))
+                    await ws.close()
+                    return
             elif ready and character:
                 try:
                     command = shlex.split(data['data'])

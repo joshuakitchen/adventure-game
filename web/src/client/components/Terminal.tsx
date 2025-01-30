@@ -84,7 +84,7 @@ export const TerminalInput: Component<{
           autocomplete='off'
           autocorrect='off'
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && props.onSend) {
+            if (e.key === 'Enter' && props.onSend && inRef.value !== '') {
               props.onSend.call(null, inRef.value)
             } else {
               let val = inRef.value
