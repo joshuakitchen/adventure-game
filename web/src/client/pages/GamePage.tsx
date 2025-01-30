@@ -113,7 +113,7 @@ export const GamePage: Component = () => {
         </nav>
         <div class='flex-1 h-1 md:h-auto'>
           <Terminal
-            screen={{ text: text() }}
+            screen={{ text: text(), scrollOnChange: true }}
             value={input()}
             autocomplete={suggestion()}
             onSend={(cmd: string) => {
@@ -135,7 +135,7 @@ export const GamePage: Component = () => {
         </div>
         <div class='w-96 flex-col border-l border-zinc-800 hidden lg:flex'>
           <Terminal
-            screen={{ text: chatText() }}
+            screen={{ text: chatText(), scrollOnChange: true }}
             value={chatInput()}
             onSend={() => {
               ws().send(

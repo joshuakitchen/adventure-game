@@ -116,6 +116,7 @@ export const TerminalInput: Component<{
 export const Terminal: Component<{
   screen: {
     text: string
+    scrollOnChange?: boolean
   }
   value: string
   autocomplete?: string
