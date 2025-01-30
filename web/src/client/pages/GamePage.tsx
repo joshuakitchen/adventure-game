@@ -19,6 +19,18 @@ export const GamePage: Component = () => {
   const [adminModal, setAdminModal] = createSignal(false)
   const [retries, setRetries] = createSignal(0)
 
+  let chatDiv: HTMLDivElement
+  function sendChatText(str: string) {
+    if (!chatDiv) {
+      return
+    }
+    if (getComputedStyle(chatDiv).display === 'none') {
+      setText((text) => text + str)
+    } else {
+      setChatText((text) => text + str)
+    }
+  }
+
   onMount(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
     const ws = new WebSocket(`${protocol}://${document.location.host}/play`)
@@ -33,28 +45,28 @@ export const GamePage: Component = () => {
       if (message.type == 'error') {
         setText((text) => text + '\x1b[31m' + message.data + '\x1b[0m\n')
       } else if (message.type == 'game') {
-        if (!ready()) {
-          setChatText(
-            '\x1b[92mYou are connected to the global chat channel.\x1b[0m\n'
-          )
-          setReady(true)
-        }
         setText((text) => text + message.data + '\n')
-      } else if (message.type === 'suggestion') {
         if (!ready()) {
-          setChatText(
+          sendChatText(
             '\x1b[92mYou are connected to the global chat channel.\x1b[0m\n'
           )
           setReady(true)
         }
+      } else if (message.type === 'suggestion') {
         setSuggestion(message.data)
+        if (!ready()) {
+          sendChatText(
+            '\x1b[92mYou are connected to the global chat channel.\x1b[0m\n'
+          )
+          setReady(true)
+        }
       } else if (message.type === 'autocomplete') {
         if (message.data.length > 0) {
           setInput(message.data)
           setSuggestion('')
         }
       } else if (message.type === 'chat') {
-        setChatText((text) => text + message.data + '\n')
+        sendChatText(message.data)
       }
     }
     ws.onclose = () => {
@@ -123,6 +135,17 @@ export const GamePage: Component = () => {
             value={input()}
             autocomplete={suggestion()}
             onSend={(cmd: string) => {
+              if (cmd.startsWith('>')) {
+                ws().send(
+                  JSON.stringify({
+                    type: 'game',
+                    data: `say ${cmd.substring(1)}`,
+                  })
+                )
+                setInput('')
+                setSuggestion('')
+                return
+              }
               setText((text) => text + '> ' + cmd + '\n')
               ws().send(JSON.stringify({ type: 'game', data: cmd }))
               setInput('')
@@ -147,7 +170,10 @@ export const GamePage: Component = () => {
             }}
           />
         </div>
-        <div class='w-96 flex-col border-l border-zinc-800 hidden lg:flex'>
+        <div
+          class='w-96 flex-col border-l border-zinc-800 hidden lg:flex'
+          ref={chatDiv}
+        >
           <Terminal
             screen={{ text: chatText(), scrollOnChange: true }}
             value={chatInput()}

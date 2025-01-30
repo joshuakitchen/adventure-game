@@ -32,7 +32,7 @@ def get_users():
         try:
             cur = conn.cursor()
             try:
-                cur.execute('SELECT id, email, is_admin FROM users')
+                cur.execute('SELECT id, email, name, is_admin FROM users')
                 return cur.fetchall()
             finally:
                 cur.close()
@@ -40,7 +40,7 @@ def get_users():
             conn.close()
     elif driver == 'postgres':
         with conn.cursor() as curs:
-            curs.execute('SELECT id, email, is_admin FROM users')
+            curs.execute('SELECT id, email, name, is_admin FROM users')
             return curs.fetchall()
 
 

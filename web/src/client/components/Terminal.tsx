@@ -105,6 +105,9 @@ export const TerminalInput: Component<{
       <a
         class='p-4 text-zinc-700 hover:text-zinc-500 hover:cursor-pointer transition-colors'
         onClick={() => {
+          if (inRef.value === '') {
+            return
+          }
           props.onSend?.call(null, inRef.value)
           if (inRef) {
             inRef.focus()
