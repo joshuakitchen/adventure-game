@@ -87,7 +87,6 @@ async def play(ws: WebSocket):
         await ws.close()
         return
     ready = False
-    already_logged_in = False
     for loaded_character in World._characters:
         if loaded_character._id == user['id']:
             await loaded_character._ws.send_json(dict(type='error', data='You have logged in elsewhere, disconnecting.'))
@@ -127,6 +126,8 @@ async def play(ws: WebSocket):
                         data['data'],
                         character._name)
                     await character.command_handler.handle_input(command)
+                elif data['type'] == 'ping':
+                    await ws.send_json(dict(type='pong', data=''))
     except WebSocketDisconnect:
         pass
     except Exception as e:

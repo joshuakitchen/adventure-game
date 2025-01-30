@@ -27,5 +27,4 @@
     "python.autoComplete.extraPaths": [
         "${workpsaceFolder}/api/adventure_api"
     ]
-    
 }
