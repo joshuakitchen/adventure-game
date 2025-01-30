@@ -24,6 +24,7 @@ export const GamePage: Component = () => {
   )
   const [readyInterval, setReadyInterval] = createSignal<number | null>(null)
   const [connecting, setConnecting] = createSignal(false)
+  const [pingSent, setPingSent] = createSignal(false)
 
   let chatDiv: HTMLDivElement
   function sendChatText(str: string) {
@@ -113,11 +114,18 @@ export const GamePage: Component = () => {
     if (webSocket && ready()) {
       setPingInterval(
         setInterval(() => {
+          if (pingSent()) {
+            ws().close()
+            setWs(null)
+            setPingSent(false)
+            return
+          }
           if (ws() && ws().readyState !== WebSocket.OPEN) {
             setPingInterval(null)
             return
           }
           ws().send(JSON.stringify({ type: 'ping', data: '' }))
+          setPingSent(true)
         }, 5000)
       )
     } else if (

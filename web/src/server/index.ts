@@ -141,11 +141,13 @@ async function main() {
         } catch (err) {}
       }
       proxy.onclose = () => {
+        winston.info(`[${req.ip}] outgoing websocket disconnected`)
         try {
           ws.close()
         } catch (err) {}
       }
       ws.onclose = () => {
+        winston.info(`[${req.ip}] incoming websocket disconnected`)
         try {
           proxy.close()
         } catch (err) {}
