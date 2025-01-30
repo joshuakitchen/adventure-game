@@ -6,14 +6,16 @@ import time
 import jwt
 import re
 import os
-from fastapi import Depends, FastAPI, HTTPException, WebSocket, Header, WebSocketDisconnect
+from fastapi import Depends, FastAPI, HTTPException, WebSocket, Header, WebSocketDisconnect, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.security.utils import get_authorization_scheme_param
 from pydantic import BaseModel
 from typing import Dict, Optional
 from game import Character, BasicCommands, CommandHandler, World, WorldCommands
-from user import check_password, get_user, register_user
+from user import check_password, get_user, register_user, get_users
 from setup import setup_database
+from starlette.middleware.authentication import AuthenticationMiddleware
+from auth import BearerTokenBackend
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -36,6 +38,11 @@ class RegisterRequest(BaseModel):
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     decoded_token = jwt.decode(token, CLIENT_SECRET, algorithms=['HS256'])
     return {'id': decoded_token['user_id'], 'email': decoded_token['email']}
+
+
+@app.on_event("startup")
+async def startup():
+    app.add_middleware(AuthenticationMiddleware, backend=BearerTokenBackend())
 
 
 @app.post('/register')
@@ -74,20 +81,27 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         'is_admin': user[3]
     }
 
+@app.get('/api/v1/users')
+async def get_users_route(request: Request, authorization=Header()):
+    user = request.user
+    if not user or not user['is_admin']:
+        raise HTTPException(403, 'You do not have permission to access this resource.')
+    users = [
+        dict(id=u[0], email=u[1], is_admin=u[2]) for u in get_users()
+    ]
+
+    return {
+        'data': users,
+        'total': len(users)
+    }
+
 
 @app.websocket('/play')
-async def play(ws: WebSocket, authorization=Header()):
+async def play(ws: WebSocket):
     await ws.accept()
     error = None
-    scheme, param = get_authorization_scheme_param(authorization)
-    if scheme != 'Bearer':
-        error = 'Incorrect email or password'
-    user: Optional[Dict[str, str]] = None
-    try:
-        user = await get_current_user(param)
-    except (jwt.exceptions.DecodeError, jwt.exceptions.InvalidSignatureError):
-        error = 'Incorrect email or password'
-    if error or not user:
+    user = ws.user
+    if not user:
         await ws.send_json(dict(type='error', data=error))
         await ws.close()
         return
@@ -100,6 +114,7 @@ async def play(ws: WebSocket, authorization=Header()):
     try:
         while True:
             data = await ws.receive_json()
+            logger.info(data)
             if data['type'] == 'ready' and not ready:
                 ready = True
                 if not already_logged_in:

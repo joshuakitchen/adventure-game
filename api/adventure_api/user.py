@@ -26,6 +26,24 @@ def get_user(email):
             return curs.fetchone()
 
 
+def get_users():
+    driver, conn = get_conn()
+    if driver == 'sqlite':
+        try:
+            cur = conn.cursor()
+            try:
+                cur.execute('SELECT id, email, is_admin FROM users')
+                return cur.fetchall()
+            finally:
+                cur.close()
+        finally:
+            conn.close()
+    elif driver == 'postgres':
+        with conn.cursor() as curs:
+            curs.execute('SELECT id, email, is_admin FROM users')
+            return curs.fetchall()
+
+
 def check_password(expected, actual):
     if not isinstance(expected, bytes):
         expected = bytes(expected, 'utf-8')

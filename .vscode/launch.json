@@ -38,13 +38,16 @@
       "request": "launch",
       "restart": true,
       "runtimeExecutable": "${workspaceFolder}/web/node_modules/nodemon/bin/nodemon.js",
-      "runtimeArgs": ["-w", "src/server/*.*", "-w", "templates/*.*", "--ext", "js,jsx,ts,tsx,json,html", "--exec", "ts-node"],
+      "runtimeArgs": ["-w", "src/server/*.*", "-w", "templates/*.*", "--ext", "js,jsx,ts,tsx,json,html", "--exec", "tsx"],
       "skipFiles": [
         "<node_internals>/**"
       ],
       "console": "internalConsole",
       "outputCapture": "std",
-      "envFile": "${workspaceFolder}/.env.dev"
+      "envFile": "${workspaceFolder}/.env.dev",
+      "env": {
+        "NODE_ENV": "development",
+      }
     }
   ]
 }
