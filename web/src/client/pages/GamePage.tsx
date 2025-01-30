@@ -116,6 +116,11 @@ export const GamePage: Component = () => {
         setInterval(() => {
           if (pingSent()) {
             ws().close()
+            clearInterval(pingInterval())
+            setPingInterval(null)
+            setReady(false)
+            clearInterval(readyInterval())
+            setReadyInterval(null)
             setWs(null)
             setPingSent(false)
             return
