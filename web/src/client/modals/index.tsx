@@ -1,1 +1,2 @@
-export { default as AdminModal } from './admin'
+export { default as AdminModal } from './AdminModal'
+export { default as BugModal } from './BugModal'

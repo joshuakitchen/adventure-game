@@ -4,7 +4,7 @@ import { useUser } from '../user'
 import { useNavigate } from '@solidjs/router'
 import axios from 'axios'
 import { Terminal } from '../components/Terminal'
-import { AdminModal } from '../modals/AdminModal'
+import { AdminModal, BugModal } from '../modals'
 
 export const GamePage: Component = () => {
   const navigate = useNavigate()
@@ -149,6 +149,7 @@ export const GamePage: Component = () => {
           setAdminModal(false)
         }}
       />
+      <BugModal />
       <div class='mx-auto h-full flex flex-col md:flex-row text-gray-300'>
         <nav class='flex flex-row md:flex-col border-l border-zinc-800 bg-zinc-800'>
           <a class='p-4 transition-colors hover:bg-zinc-700' href='#'>

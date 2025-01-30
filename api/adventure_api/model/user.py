@@ -4,6 +4,52 @@ from uuid import uuid4
 from config import get_conn
 
 
+def get_user_by_id(user_id):
+    driver, conn = get_conn()
+    if driver == 'sqlite':
+        try:
+            cur = conn.cursor()
+            try:
+                cur.execute(
+                    'SELECT id, email, is_admin, name, state, x, z, additional_data FROM users WHERE id = ?',
+                    [user_id])
+                user_raw = curs.fetchone()
+                if user_raw is None:
+                    return None
+                return dict(
+                    id=user_raw[0],
+                    email=user_raw[1],
+                    is_admin=user_raw[2],
+                    name=user_raw[3],
+                    state=user_raw[4],
+                    x=user_raw[5],
+                    z=user_raw[6],
+                    additional_data=user_raw[7]
+                )
+            finally:
+                cur.close()
+        finally:
+            conn.close()
+    elif driver == 'postgres':
+        with conn.cursor() as curs:
+            curs.execute(
+                'SELECT id, email, is_admin, name, state, x, z, additional_data FROM users WHERE id = %s',
+                [user_id])
+            user_raw = curs.fetchone()
+            if user_raw is None:
+                return None
+            return dict(
+                id=user_raw[0],
+                email=user_raw[1],
+                is_admin=user_raw[2],
+                name=user_raw[3],
+                state=user_raw[4],
+                x=user_raw[5],
+                z=user_raw[6],
+                additional_data=user_raw[7]
+            )
+
+
 def get_user(email):
     driver, conn = get_conn()
     if driver == 'sqlite':

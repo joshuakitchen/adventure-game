@@ -153,13 +153,20 @@ async function main() {
     } catch (err) {}
   })
 
-  app.get('/api/*', function _onApi(req, res) {
-    axios
-      .get(`${API_URI}${req.url}`, {
-        headers: {
-          Authorization: `Bearer ${req.cookies['session'].access_token}`,
-        },
-      })
+  app.all('/api/*', bodyParser.json(), function _onApi(req, res) {
+    let headers = {}
+    if (req.cookies['session']) {
+      headers['Authorization'] = `Bearer ${req.cookies['session'].access_token}`
+    }
+    if (!!req.headers['content-type']) {
+      headers['Content-Type'] = req.headers['content-type']
+    }
+    axios({
+      method: req.method.toLowerCase(),
+      url: `${API_URI}${req.url}`,
+      data: req.body,
+      headers: headers,
+    })
       .then((httpRes) => {
         res.json(httpRes.data)
       })

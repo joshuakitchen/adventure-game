@@ -1,4 +1,4 @@
-import { Component, ParentProps } from 'solid-js'
+import { Component, JSX, ParentProps, splitProps } from 'solid-js'
 import { cx } from '../util'
 
 export const TableHeader: Component<ParentProps<{ class?: string }>> = (
@@ -15,16 +15,28 @@ export const TableHeader: Component<ParentProps<{ class?: string }>> = (
   return <th class={cls}>{props.children}</th>
 }
 
-export const TableCell: Component<ParentProps<{ class?: string }>> = (
-  props
-) => {
-  const cls = cx(props.class, 'px-4', 'py-2', 'border-b', 'border-b-zinc-800')
-  return <td class={cls}>{props.children}</td>
+export const TableCell: Component<
+  ParentProps<{ class?: string }> & JSX.TdHTMLAttributes<HTMLTableCellElement>
+> = (props) => {
+  const [local, others] = splitProps(props, ['class'])
+  const cls = cx(local.class, 'px-4', 'py-2', 'border-b', 'border-b-zinc-800')
+  return (
+    <td class={cls} {...others}>
+      {props.children}
+    </td>
+  )
 }
 
-export const TableRow: Component<ParentProps<{ class?: string }>> = (props) => {
-  const cls = cx(props.class)
-  return <tr class={cls}>{props.children}</tr>
+export const TableRow: Component<
+  ParentProps<{ class?: string }> & JSX.HTMLAttributes<HTMLTableRowElement>
+> = (props) => {
+  const [local, others] = splitProps(props, ['class'])
+  const cls = cx(local.class)
+  return (
+    <tr class={cls} {...others}>
+      {props.children}
+    </tr>
+  )
 }
 
 export const TableBody: Component<ParentProps<{ class?: string }>> = (
