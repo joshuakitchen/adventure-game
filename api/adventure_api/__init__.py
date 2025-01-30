@@ -6,16 +6,16 @@ import time
 import jwt
 import re
 import os
-from fastapi import Depends, FastAPI, HTTPException, WebSocket, Header, WebSocketDisconnect, Request
+from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.security.utils import get_authorization_scheme_param
 from pydantic import BaseModel
-from typing import Dict, Optional
-from game import Character, BasicCommands, CommandHandler, World, WorldCommands
-from user import check_password, get_user, register_user, get_users
+from typing import Optional
+from game import Character, World
+from model import check_password, get_user, register_user
 from setup import setup_database
 from starlette.middleware.authentication import AuthenticationMiddleware
 from auth import BearerTokenBackend
+from api import user_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -38,11 +38,6 @@ class RegisterRequest(BaseModel):
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     decoded_token = jwt.decode(token, CLIENT_SECRET, algorithms=['HS256'])
     return {'id': decoded_token['user_id'], 'email': decoded_token['email']}
-
-
-@app.on_event("startup")
-async def startup():
-    app.add_middleware(AuthenticationMiddleware, backend=BearerTokenBackend())
 
 
 @app.post('/register')
@@ -79,20 +74,6 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         'user_id': user[0],
         'email': user[1],
         'is_admin': user[3]
-    }
-
-@app.get('/api/v1/users')
-async def get_users_route(request: Request, authorization=Header()):
-    user = request.user
-    if not user or not user['is_admin']:
-        raise HTTPException(403, 'You do not have permission to access this resource.')
-    users = [
-        dict(id=u[0], email=u[1], name=u[2], is_admin=u[3]) for u in get_users()
-    ]
-
-    return {
-        'data': users,
-        'total': len(users)
     }
 
 
@@ -181,6 +162,9 @@ thread = threading.Thread(target=lambda: asyncio.run(loop()))
 
 @app.on_event("startup")
 def begin_game_loop():
+    app.include_router(user_router)
+    app.add_middleware(AuthenticationMiddleware, backend=BearerTokenBackend())
+
     global is_running
     is_running = True
     setup_database()

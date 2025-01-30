@@ -131,15 +131,19 @@ export const GamePage: Component = () => {
         </nav>
         <div class='flex-1 h-1 md:h-auto'>
           <Terminal
+            hasAutocomplete={true}
             screen={{ text: text(), scrollOnChange: true }}
             value={input()}
             autocomplete={suggestion()}
-            onSend={(cmd: string) => {
-              if (cmd.startsWith('>')) {
+            onSend={(cmd: string, mode: number) => {
+              if (cmd.startsWith('>') || mode === 1) {
+                if (cmd.startsWith('>')) {
+                  cmd = cmd.substring(1)
+                }
                 ws().send(
                   JSON.stringify({
                     type: 'game',
-                    data: `say ${cmd.substring(1)}`,
+                    data: `say ${cmd}`,
                   })
                 )
                 setInput('')
@@ -151,23 +155,28 @@ export const GamePage: Component = () => {
               setInput('')
               setSuggestion('')
             }}
-            onChange={(cmd: string) => {
+            onChange={(cmd: string, mode: number) => {
               setInput(cmd)
-              let sock = ws()
-              if (sock) {
-                sock.send(
-                  JSON.stringify({ type: 'autocomplete_suggest', data: cmd })
-                )
+              if (mode === 0) {
+                let sock = ws()
+                if (sock) {
+                  sock.send(
+                    JSON.stringify({ type: 'autocomplete_suggest', data: cmd })
+                  )
+                }
               }
             }}
-            onSuggest={(cmd: string) => {
-              let sock = ws()
-              if (sock) {
-                sock.send(
-                  JSON.stringify({ type: 'autocomplete_get', data: cmd })
-                )
+            onSuggest={(cmd: string, mode: number) => {
+              if (mode === 0) {
+                let sock = ws()
+                if (sock) {
+                  sock.send(
+                    JSON.stringify({ type: 'autocomplete_get', data: cmd })
+                  )
+                }
               }
             }}
+            modes={[{ icon: 'gamepad' }, { icon: 'comment' }]}
           />
         </div>
         <div
@@ -175,6 +184,7 @@ export const GamePage: Component = () => {
           ref={chatDiv}
         >
           <Terminal
+            hasAutocomplete={false}
             screen={{ text: chatText(), scrollOnChange: true }}
             value={chatInput()}
             onSend={() => {

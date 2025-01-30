@@ -1,6 +1,6 @@
 from starlette.authentication import AuthenticationBackend, AuthCredentials
 from fastapi.security.utils import get_authorization_scheme_param
-from user import get_user
+from model import get_user
 import jwt
 import os
 import logging
