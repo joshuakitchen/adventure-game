@@ -100,7 +100,7 @@ export const TerminalInput: Component<{
         <input
           value={props.value}
           ref={inRef}
-          class='flex-1 p-4 relative text-gray-300 bg-transparent outline-none font-mono z-10'
+          class='flex-1 p-4 w-full text-gray-300 bg-transparent outline-none font-mono z-10'
           autocapitalize='off'
           autocomplete='off'
           autocorrect='off'
@@ -136,7 +136,7 @@ export const TerminalInput: Component<{
             }
           }}
         >
-          <FontAwesomeIcon icon='chevron-right' />
+          <FontAwesomeIcon className='fa-fw' icon='chevron-right' />
         </a>
       </Show>
       <a
@@ -151,7 +151,7 @@ export const TerminalInput: Component<{
           }
         }}
       >
-        <FontAwesomeIcon icon='paper-plane' />
+        <FontAwesomeIcon className='fa-fw' icon='paper-plane' />
       </a>
     </div>
   )
