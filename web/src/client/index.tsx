@@ -1,31 +1,42 @@
-import React, { FC } from 'react'
-import { createRoot } from 'react-dom/client'
-import { Route, Routes } from 'react-router'
-import { BrowserRouter } from 'react-router-dom'
+/* @refresh reload */
+import './index.css'
+import { render } from 'solid-js/web'
+import { Router } from '@solidjs/router'
+import { UserProvider } from './user'
+import { Component, lazy } from 'solid-js'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { far } from '@fortawesome/free-regular-svg-icons'
 import { fas } from '@fortawesome/free-solid-svg-icons'
-import { GamePage, LoginPage, RegisterPage } from './pages'
-import { UserProvider } from './user'
 
 library.add(far, fas)
 
-const root = createRoot(document.getElementById('react-root'))
+const root = document.getElementById('root')
 
-const Application: FC<{}> = function Application() {
+if (!root) {
+  throw new Error('No root element found')
+}
+
+const routes = [
+  {
+    path: '/',
+    component: lazy(() => import('./pages/GamePage')),
+  },
+  {
+    path: '/login',
+    component: lazy(() => import('./pages/LoginPage')),
+  },
+  {
+    path: '/register',
+    component: lazy(() => import('./pages/RegisterPage')),
+  },
+]
+
+const App: Component = () => {
   return (
-    <Routes>
-      <Route path='/' element={<GamePage />} />
-      <Route path='/login' element={<LoginPage />} />
-      <Route path='/register' element={<RegisterPage />} />
-    </Routes>
+    <UserProvider>
+      <Router>{routes}</Router>
+    </UserProvider>
   )
 }
 
-root.render(
-  <UserProvider>
-    <BrowserRouter>
-      <Application />
-    </BrowserRouter>
-  </UserProvider>
-)
+render(() => <App />, root)

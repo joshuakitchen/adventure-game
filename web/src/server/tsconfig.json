@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "esModuleInterop": true,
-    "moduleResolution": "node",
-    "outDir": "../../build"
+    "moduleResolution": "bundler",
+    "module": "es2015",
+    "outDir": "../../build",
   }
 }

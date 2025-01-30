@@ -1,15 +1,16 @@
-import React, {
+import {
+  Component,
   createContext,
-  FC,
-  PropsWithChildren,
+  ParentProps,
   useContext,
-  useState,
-} from 'react'
+  type JSX,
+} from 'solid-js'
+import { createStore, SetStoreFunction } from 'solid-js/store'
 
 export type UserData = { id: string; email: string; is_admin: boolean }
-export type UserContextData = [UserData, (UserData) => void]
+export type UserContextData = [UserData, SetStoreFunction<UserData>]
 
-const UserContext = createContext<UserContextData>(null)
+const UserContext = createContext<UserContextData>()
 
 const getMetaTag = function getMetaTag(name: string): any {
   const tags = document.getElementsByTagName('meta')
@@ -22,10 +23,11 @@ const getMetaTag = function getMetaTag(name: string): any {
   return null
 }
 
-export const UserProvider: FC<PropsWithChildren> = function UserProvider(
-  props
-) {
-  const [state, setState] = useState<UserData>(getMetaTag('user'))
+export const UserProvider: Component<ParentProps<{}>> = (props: {
+  children: JSX.Element
+}) => {
+  const [state, setState] = createStore<UserData>(getMetaTag('user'))
+
   return (
     <UserContext.Provider value={[state, setState]}>
       {props.children}
@@ -33,6 +35,6 @@ export const UserProvider: FC<PropsWithChildren> = function UserProvider(
   )
 }
 
-export const useUser = function useUser(): UserContextData {
+export const useUser = (): UserContextData => {
   return useContext(UserContext)
 }

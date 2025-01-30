@@ -2,9 +2,12 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "jsx": "react",
-    "target": "es2015",
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "target": "esnext",
+    "module": "esnext",
     "baseUrl": ".",
+    "types": ["vite/client"],
     "paths": {
       "@components": ["components"],
       "@modals": ["modals"]

@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   {% if userdata %}
   <meta name="user" content="{{userdata}}" />
   {% endif %}
   <title>Text-Based Adventure Game</title>
-  <link href="/static/main.css" rel="stylesheet" type="text/css" />
+  <link href="/dist/styles.css" rel="stylesheet">
 </head>
 <body class="bg-zinc-900 h-full">
+  <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="modal-container"></div>
-  <div id="react-root" class="h-full"></div>
-  <script src="/static/main.js"></script>
+  <div id="root" class="h-full"></div>
+  <!-- <script src="/static/main.js"></script> -->
+  <script src="/src/client/index.tsx" type="module"></script>
 </body>
 </html>
