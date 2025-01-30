@@ -109,24 +109,21 @@ async def play(ws: WebSocket):
     already_logged_in = False
     for loaded_character in World._characters:
         if loaded_character._id == user['id']:
-            already_logged_in = True
+            await loaded_character._ws.send_json(dict(type='error', data='You have logged in elsewhere, disconnecting.'))
+            await loaded_character._ws.close()
+            break
     character: Optional[Character] = None
     try:
         while True:
             data = await ws.receive_json()
             if data['type'] == 'ready' and not ready:
                 ready = True
-                if not already_logged_in:
-                    character = Character(user['id'], ws)
-                    if character.name:
-                        await World.send_to_all(
-                            'chat', '@lgr@{}@res@ has just logged in.\n', character.name)
-                    World.add_player(character)
-                    await character.handle_login()
-                else:
-                    await ws.send_json(dict(type='error', data='You are already logged in elsewhere.'))
-                    await ws.close()
-                    return
+                character = Character(user['id'], ws)
+                if character.name:
+                    await World.send_to_all(
+                        'chat', '@lgr@{}@res@ has just logged in.\n', character.name)
+                World.add_player(character)
+                await character.handle_login()
             elif ready and character:
                 try:
                     command = shlex.split(data['data'])

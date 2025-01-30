@@ -48,6 +48,11 @@ export const GamePage: Component = () => {
           setReady(true)
         }
         setSuggestion(message.data)
+      } else if (message.type === 'autocomplete') {
+        if (message.data.length > 0) {
+          setInput(message.data)
+          setSuggestion('')
+        }
       } else if (message.type === 'chat') {
         setChatText((text) => text + message.data + '\n')
       }
@@ -128,6 +133,14 @@ export const GamePage: Component = () => {
               if (sock) {
                 sock.send(
                   JSON.stringify({ type: 'autocomplete_suggest', data: cmd })
+                )
+              }
+            }}
+            onSuggest={(cmd: string) => {
+              let sock = ws()
+              if (sock) {
+                sock.send(
+                  JSON.stringify({ type: 'autocomplete_get', data: cmd })
                 )
               }
             }}

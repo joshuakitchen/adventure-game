@@ -68,6 +68,7 @@ export const TerminalInput: Component<{
   autocomplete?: string
   onSend?: (input: string) => void
   onChange?: (input: string) => void
+  onSuggest?: (input: string) => void
 }> = (props) => {
   let inRef: HTMLInputElement
   return (
@@ -86,6 +87,9 @@ export const TerminalInput: Component<{
           onKeyDown={(e) => {
             if (e.key === 'Enter' && props.onSend && inRef.value !== '') {
               props.onSend.call(null, inRef.value)
+            } else if (e.key === 'Tab' && props.onSuggest) {
+              e.preventDefault()
+              props.onSuggest.call(null, inRef.value)
             } else {
               let val = inRef.value
               if (props.onChange) {
@@ -122,6 +126,7 @@ export const Terminal: Component<{
   autocomplete?: string
   onSend?: (input: string) => void
   onChange?: (input: string) => void
+  onSuggest?: (input: string) => void
   ref?: HTMLInputElement
 }> = (props) => {
   return (
@@ -132,6 +137,7 @@ export const Terminal: Component<{
         autocomplete={props.autocomplete}
         onSend={props.onSend}
         onChange={props.onChange}
+        onSuggest={props.onSuggest}
       />
     </div>
   )
