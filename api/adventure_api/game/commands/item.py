@@ -25,6 +25,14 @@ class ItemCommands:
 
         :command_summary: Drops an item from your inventory.
         :command_param_type item: inventory"""
+        if item == 'all':
+            count = len(c.inventory)
+            for i in range(count):
+                c._cell.add_item(0)
+                c.remove_item_at(0)
+            
+            await c.send_message('game', 'You drop all items in your inventory.\n')
+            return
         i_idx = -1
         for idx, i in enumerate(c.inventory):
             if i['name'] == item:
@@ -38,9 +46,22 @@ class ItemCommands:
         c._cell.add_item(inv_item)
         await c.send_message('game', 'You drop the @yel@{}@res@\n', item)
 
+    @command
+    async def inspect(self, c: 'Character', item: str):
+        """Inspects an item in your inventory.
+        
+        :command_summary: Inspects an item in your inventory.
+        :command_param_type item: inventory"""
+        for i in c.inventory:
+            print(i)
+            if i['name'] == item:
+                await c.send_message('game', 'You inspect the @yel@{}@res@ and find:\n{}\n', item, i['description'])
+                return
+        await c.send_message('game', 'You don\'t have a @yel@{}@res@.\n', item)
+
     @autocomplete('inventory')
     def autocomplete_inventory(self, c: 'Character', *inputs: str):
         return [
             f'"{i["name"]}"' if " " in i['name'] else i['name']
             for i in c.inventory
-        ]
+        ] + ['all']

@@ -10,7 +10,13 @@ export const AdminModal: Component<{
   onClose?: () => void
 }> = (props) => {
   const [userData, setUserData] = createStore<{
-    users: Array<{ id: string; email: string; name: string; is_admin: boolean }>
+    users: Array<{
+      id: string
+      email: string
+      name: string
+      location: string
+      is_admin: boolean
+    }>
   }>({ users: [] })
 
   createEffect(() => {
@@ -41,6 +47,7 @@ export const AdminModal: Component<{
                   <Table.Row>
                     <Table.Header class='md:w-[24rem]'>Email</Table.Header>
                     <Table.Header>Name</Table.Header>
+                    <Table.Header class='w-40'>Location</Table.Header>
                     <Table.Header class='w-40 hidden md:table-cell'>
                       Role
                     </Table.Header>
@@ -52,6 +59,7 @@ export const AdminModal: Component<{
                       <Table.Row>
                         <Table.Cell>{user.email}</Table.Cell>
                         <Table.Cell>{user.name}</Table.Cell>
+                        <Table.Cell>{user.location}</Table.Cell>
                         <Table.Cell class='hidden md:table-cell'>
                           {user.is_admin ? 'Admin' : 'User'}
                         </Table.Cell>

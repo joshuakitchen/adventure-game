@@ -111,10 +111,10 @@ class WorldCommands:
         await self.survey(c, c._cell)
 
     @command
-    async def inspect(self, c: 'Character', cell: 'Cell', target, ordinal: Optional[int] = None):
-        """Inspects the given target.
+    async def look(self, c: 'Character', cell: 'Cell', target, ordinal: Optional[int] = None):
+        """Looks at the given target.
 
-        :command_summary: Inspects the given target.
+        :command_summary: Looks at the given target and gives a description.
         :command_param_type target: target
         :command_param_type ordinal: target_ordinal"""
         if ordinal is not None:
@@ -161,7 +161,6 @@ class WorldCommands:
             f'"{i["name"]}"' if " " in i['name'] else i['name']
             for i in c._cell.items
         ]
-
 
     @aliases
     def alias_provider(self):

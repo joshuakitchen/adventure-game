@@ -4,7 +4,8 @@ import random
 from .enemy import Enemy
 from .item import Item
 from noise import snoise2
-from typing import Any, Dict, Optional, List, Tuple, Union, TYPE_CHECKING
+from typing import Any, Dict, Optional, List, NamedTuple, Tuple, Union, TYPE_CHECKING
+
 
 if TYPE_CHECKING:
     from .character import Character
@@ -14,7 +15,6 @@ TREE_SCALE = 30
 
 with open('./data/biomes.json', 'r') as f:
     BIOME_DATA: Dict[str, Any] = json.loads(f.read())
-
 
 MAX_ENEMIES = 4
 SPAWN_TICK = 60
@@ -124,9 +124,9 @@ class Cell:
         if scavenge_list is None:
             return None
         item = random.choice(scavenge_list)
-        return (item[0], item[1])
+        return [item[0], item[1]]
 
-    def _get_scavenge_list(self) -> Optional[List[Any]]:
+    def _get_scavenge_list(self) -> Optional[List[Tuple[str, Dict[str, str]]]]:
         """Generates the list of items that can be scavenged."""
         if self._biome not in BIOME_DATA:
             return None

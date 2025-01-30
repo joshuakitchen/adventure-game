@@ -27,7 +27,7 @@ Type "begin" followed by your character name to start.
 \n\n'''
 
 
-SCAVENGE_TIMER = 3
+SCAVENGE_TIMER = 1
 SCAVENGE_CHANCE = 0.6
 
 
@@ -106,13 +106,23 @@ class Character:
         if self._action == 'scavenge':
             if random.random() > SCAVENGE_CHANCE:
                 item = self._cell.get_scavenge_item()
+                
+                for k, v in item[1].items():
+                    if v.startswith('script:'):
+                        fn = getattr(Item, v[7:])
+                        item[1][k] = fn(character=self)
+
                 if self.add_item(*item):
-                    await self.send_message('game', 'You find a @yel@{}@res@\n', Item.get_display_name(item))
+                    aan = 'an' if Item.get_display_name(item).lower()[0] in 'aeiou' else 'a'
+
+                    await self.send_message('game', 'You find {} @yel@{}@res@', aan, Item.get_display_name(item))
+                    
+                    await Item.handle_script(item, 'on_scavenge', character=self)
                 else:
-                    await self.send_message('game', 'Unable to add item, your inventory is full.\n')
+                    await self.send_message('game', 'Unable to add item, your inventory is full.')
                     self._action = None
-            else:
-                await self.send_message('game', 'You find nothing of use.')
+            # else:
+            #     await self.send_message('game', 'You find nothing of use.')
             self._action_timer = SCAVENGE_TIMER
         elif self._action == 'attack':
             target = self.target
@@ -149,6 +159,25 @@ class Character:
                 self._target = None
                 self._action = None
             self._action_timer = 3
+
+    async def process_script(self, script: List[Any], *args, **kwargs):
+        """Processes a script for the character.
+
+        :param script: The script to process."""
+        for action in script:
+            if action[0] == 'message':
+                await self.send_message('game', action[1])
+            elif action[0] == 'add_exp':
+                skill = action[1]
+                xp = action[2]
+                if not skill in self._skills:
+                    self._skills[skill] = [1, 0]
+                level, current_xp = self._skills[skill]
+                current_xp += xp
+                while current_xp >= EXP_TABLE[level - 1]:
+                    current_xp -= EXP_TABLE[level - 1]
+                    level += 1
+                self._skills[skill] = (level, current_xp)
 
     async def damage(self, enemy_id: str, damage: int) -> bool:
         if not self._cell:
@@ -373,3 +402,11 @@ class Character:
     @ property
     def free_slots(self):
         return 5 - sum([i['slots_taken'] for i in self.inventory])
+    
+    @property
+    def coordinate(self):
+        return self._x, self._z
+    
+    @property
+    def coordinate_str(self) -> str:
+        return f'{self._x},{self._z}'

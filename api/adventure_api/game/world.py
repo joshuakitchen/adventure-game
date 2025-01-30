@@ -91,6 +91,16 @@ class World:
         cls._characters.remove(character)
         if character._cell:
             cls.unload_cell(character._x, character._z, character)
+    
+    @classmethod
+    def get_player(cls, name: str) -> 'Character':
+        """Gets a player by their name.
+
+        :param name: The name of the player."""
+        for character in cls._characters:
+            if character._name == name:
+                return character
+        return None
 
 
 World._characters = []

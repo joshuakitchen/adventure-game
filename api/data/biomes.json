@@ -10,9 +10,7 @@
   },
   "forest": {
     "scavenge": [
-      ["rock", {"shape": "smooth"}],
-      ["rock", {"shape": "pointy"}],
-      ["stick", {"material": "oak"}]
+      ["sagewort", {"quality": "script:get_sagewort_quality"}]
     ],
     "enemies": [
       "rabbit"
