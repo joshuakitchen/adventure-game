@@ -80,10 +80,9 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 @app.websocket('/play')
 async def play(ws: WebSocket):
     await ws.accept()
-    error = None
     user = ws.user
     if not user:
-        await ws.send_json(dict(type='error', data=error))
+        await ws.send_json(dict(type='error', data='You must be logged in to play.'))
         await ws.close()
         return
     ready = False
@@ -109,6 +108,8 @@ async def play(ws: WebSocket):
                     command = shlex.split(data['data'])
                 except ValueError:
                     command = data['data'].split(" ")
+                except KeyError:
+                    command = ['']
                 if len(data['data']) > 0 and data['data'].split(' ')[-1] == '':
                     command.append('')
                 if data['type'] == 'autocomplete_suggest':

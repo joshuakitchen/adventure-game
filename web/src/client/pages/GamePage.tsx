@@ -23,6 +23,7 @@ export const GamePage: Component = () => {
     null
   )
   const [readyInterval, setReadyInterval] = createSignal<number | null>(null)
+  const [connecting, setConnecting] = createSignal(false)
 
   let chatDiv: HTMLDivElement
   function sendChatText(str: string) {
@@ -37,15 +38,24 @@ export const GamePage: Component = () => {
   }
 
   const openWebSocket = () => {
+    if (connecting()) {
+      return
+    }
+    setConnecting(true)
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
     const ws = new WebSocket(`${protocol}://${document.location.host}/play`)
+    setWs(ws)
     ws.onopen = () => {
       clearInterval(connectInterval())
       setConnectInterval(null)
-      setWs(ws)
+      setConnecting(false)
       setReadyInterval(
         setInterval(() => {
-          ws.send(JSON.stringify({ type: 'ready' }))
+          if (ws.readyState !== WebSocket.OPEN) {
+            clearInterval(readyInterval())
+            return
+          }
+          ws.send(JSON.stringify({ type: 'ready', data: '' }))
         }, 100)
       )
     }
@@ -53,6 +63,10 @@ export const GamePage: Component = () => {
       const message = JSON.parse(data)
       if (message.type == 'error') {
         setText((text) => text + '\x1b[31m' + message.data + '\x1b[0m\n')
+        setWs(null)
+        setReady(false)
+        clearInterval(readyInterval())
+        setReadyInterval(null)
       } else if (message.type == 'game') {
         setText((text) => text + message.data + '\n')
         if (!ready()) {
@@ -95,7 +109,8 @@ export const GamePage: Component = () => {
   }
 
   createEffect(() => {
-    if (ws() && ready()) {
+    const webSocket = ws()
+    if (webSocket && ready()) {
       setPingInterval(
         setInterval(() => {
           if (ws() && ws().readyState !== WebSocket.OPEN) {
@@ -105,12 +120,18 @@ export const GamePage: Component = () => {
           ws().send(JSON.stringify({ type: 'ping', data: '' }))
         }, 5000)
       )
-    } else if (!ws() || ws().readyState !== WebSocket.OPEN) {
-      setConnectInterval(
-        setInterval(() => {
-          openWebSocket()
-        }, 1000 * Math.min(30, Math.pow(2, retries())))
-      )
+    } else if (
+      !webSocket ||
+      (webSocket.readyState !== WebSocket.OPEN && !connecting())
+    ) {
+      setReady(false)
+      if (connectInterval() === null) {
+        setConnectInterval(
+          setInterval(() => {
+            openWebSocket()
+          }, 1000 * Math.min(30, Math.pow(2, retries())))
+        )
+      }
     }
   })
 
