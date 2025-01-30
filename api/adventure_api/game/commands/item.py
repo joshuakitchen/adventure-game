@@ -53,7 +53,6 @@ class ItemCommands:
         :command_summary: Inspects an item in your inventory.
         :command_param_type item: inventory"""
         for i in c.inventory:
-            print(i)
             if i['name'] == item:
                 await c.send_message('game', 'You inspect the @yel@{}@res@ and find:\n{}\n', item, i['description'])
                 return

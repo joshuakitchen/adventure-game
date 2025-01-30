@@ -26,9 +26,10 @@ class Item:
 
         desc = data['description']['base']
         
-        for k, v in data['description']['extra'].items():
-            if Item.match_condition(item, k):
-                desc += '\n' + v
+        if 'extra' in data['description']:
+            for k, v in data['description']['extra'].items():
+                if Item.match_condition(item, k):
+                    desc += '\n' + v
 
         return desc.format(
             **{k: v.capitalize() for k, v in item[1].items()}).strip()

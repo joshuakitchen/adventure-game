@@ -1,7 +1,9 @@
 {
   "stick": {
     "name": "{material} Stick",
-    "description": "A stick made of {material}.",
+    "description": {
+      "base": "A stick made of {material}."
+    },
     "command_name": "{material}_stick",
     "slots_taken": 2,
     "qualifiers": {
@@ -10,7 +12,9 @@
   },
   "rock": {
     "name": "{shape} Rock",
-    "description": "A rock that is {shape}.",
+    "description": {
+      "base": "A rock that is {shape}."
+    },
     "command_name": "{shape}_rock",
     "slots_taken": 1,
     "qualifiers": {
