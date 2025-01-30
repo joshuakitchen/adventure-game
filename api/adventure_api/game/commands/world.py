@@ -38,8 +38,27 @@ class WorldCommands:
         for bm, pm in zip(biome_map.split('\n'), population_map.split('\n')):
             map_display = map_display + bm + ' ' + pm + '\n'
         entity_names: List[str] = [f'@lgr@{e.name}@res@' for e in cell.characters if e is not c] + \
-            [f'@red@{e.name}@res@' for e in cell.enemies]
+            [f'@red@{e.name}@res@' for e in cell.enemies] + \
+            [f'@yel@{e["name"]}@res@' for e in cell.items]
         await c.send_message('game', 'You survey the surrounding area.\nMap:      Pop.:\n{}You can see:\n{}\n', map_display, '\n'.join(entity_names))
+
+    @command
+    async def pickup(self, c: 'Character', item: str):
+        """Picks up an item from the local area.
+
+        :command_summary: Picks up an item from the local area.
+        :command_param_type item: item"""
+        i_idx = -1
+        for idx, i in enumerate(c._cell.items):
+            if i['name'] == item:
+                i_idx = idx
+                break
+        else:
+            await c.send_message('game', '@red@Item could not be found.@res@\n')
+            return
+        i_item = c._cell._items.pop(i_idx)
+        c.add_item(i_item[0], i_item[1])
+        await c.send_message('game', 'You pick up the @yel@{}@res@\n', item)
 
     @command
     async def scavenge(self, character: 'Character'):
@@ -134,6 +153,15 @@ class WorldCommands:
         if World.get_cell(c._x, c._z + 1)._biome not in IMMOVABLE_BIOMES:
             available_directions.append('south')
         return available_directions
+    
+    @autocomplete('item')
+    def autocomplete_item(self, c: 'Character', *inputs: str):
+        """Autocompletes the item which can be picked up from the local area."""
+        return [
+            f'"{i["name"]}"' if " " in i['name'] else i['name']
+            for i in c._cell.items
+        ]
+
 
     @aliases
     def alias_provider(self):

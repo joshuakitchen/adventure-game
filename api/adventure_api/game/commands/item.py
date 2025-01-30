@@ -33,7 +33,9 @@ class ItemCommands:
         if i_idx == -1:
             await c.send_message('game', 'You don\'t have a @yel@{}@res@.\n', item)
             return
+        inv_item = c._inventory[i_idx]
         c.remove_item_at(i_idx)
+        c._cell.add_item(inv_item)
         await c.send_message('game', 'You drop the @yel@{}@res@\n', item)
 
     @autocomplete('inventory')

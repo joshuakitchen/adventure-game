@@ -2,6 +2,7 @@ import asyncio
 import json
 import random
 from .enemy import Enemy
+from .item import Item
 from noise import snoise2
 from typing import Any, Dict, Optional, List, Tuple, Union, TYPE_CHECKING
 
@@ -29,6 +30,7 @@ class Cell:
     _claimed_by: Optional[str]
     _characters: List['Character']
     _enemies: List[Enemy]
+    _items: List[Tuple[str, Dict[str, str]]]
     _spawn_tick: int
 
     def __init__(self, x: int, z: int):
@@ -36,6 +38,7 @@ class Cell:
         self._z = z
         self._characters = []
         self._enemies = []
+        self._items = []
         self._claimed_by = None
         self._spawn_tick = SPAWN_TICK
         self.load()
@@ -90,6 +93,9 @@ class Cell:
                 self._biome = 'forest'
             else:
                 self._biome = 'plains'
+
+    def add_item(self, item: Tuple[str, Dict[str, str]]):
+        self._items.append(item)
 
     @property
     def biome_icon(self):
@@ -176,6 +182,10 @@ class Cell:
     @property
     def enemies(self) -> List[Enemy]:
         return self._enemies
+    
+    @property
+    def items(self) -> List[str]:
+        return [Item.get_item_properties(item) for item in self._items]
 
     @property
     def data(self) -> Dict[str, Any]:

@@ -111,6 +111,8 @@ class Character:
                 else:
                     await self.send_message('game', 'Unable to add item, your inventory is full.\n')
                     self._action = None
+            else:
+                await self.send_message('game', 'You find nothing of use.')
             self._action_timer = SCAVENGE_TIMER
         elif self._action == 'attack':
             target = self.target
@@ -252,7 +254,9 @@ class Character:
     def remove_item_at(self, slot: int):
         if slot >= len(self._inventory):
             return
+        item = self._inventory[slot]
         del self._inventory[slot]
+        return item
 
     def move(self, x: int, z: int):
         """Moves to the specified cell.
