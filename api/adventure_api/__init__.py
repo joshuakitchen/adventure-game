@@ -85,6 +85,7 @@ async def play(ws: WebSocket):
         await ws.send_json(dict(type='error', data='You must be logged in to play.'))
         await ws.close()
         return
+    logging.info('user [%s] connected', user['id'])
     ready = False
     for loaded_character in World._characters:
         if loaded_character._id == user['id']:
@@ -130,7 +131,7 @@ async def play(ws: WebSocket):
                 elif data['type'] == 'ping':
                     await ws.send_json(dict(type='pong', data=''))
     except WebSocketDisconnect:
-        pass
+        logging.info('websocket [%s] disconnected', user['id'])
     except Exception as e:
         await ws.send_json(dict(type='error', data='An internal error has occurred.'))
         logging.exception(e)
