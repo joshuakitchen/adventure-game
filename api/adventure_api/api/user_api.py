@@ -1,4 +1,8 @@
-from fastapi import APIRouter, Request, Header, HTTPException
+import subprocess
+
+from datetime import datetime
+from fastapi import APIRouter, Request, Header, HTTPException, Response
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 from model import get_users, get_user_by_id
 from game import World
@@ -8,6 +12,45 @@ user_router = APIRouter()
 
 class PutUserRequest(BaseModel):
     additional_data: str
+
+def fmt_sql_val(val):
+    if val is None:
+        return 'NULL'
+    if isinstance(val, str):
+        return f"'{val}'"
+    if isinstance(val, datetime):
+        return f"'{val.isoformat()}'"
+    return str(val)
+
+@user_router.get('/api/v1/db')
+async def get_db_dump(request: Request) -> Response:
+    """GET /api/v1/db
+    
+    Get a dump of the database, for migration from the app platform."""
+    user = request.user
+    if not user or not user['is_admin']:
+        raise HTTPException(403, 'You do not have permission to access this resource.')
+    
+    sql_cmd = ''
+
+    driver, conn = get_conn()
+    if driver == 'sqlite':
+        raise HTTPException(501, 'Not implemented for SQLite')
+    elif driver == 'postgres':
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM users')
+            users = cur.fetchall()
+            for user in users:
+                sql_cmd += f"INSERT INTO users VALUES ({', '.join([fmt_sql_val(x) for x in user])});"
+                sql_cmd += '\n\n'
+            cur.execute('SELECT * FROM db_version')
+            db_version = cur.fetchall()
+            for version in db_version:
+                sql_cmd += f"INSERT INTO db_version VALUES ({', '.join([fmt_sql_val(x) for x in version])});"
+                sql_cmd += '\n\n'
+
+    return PlainTextResponse(content=sql_cmd)
+
 
 
 @user_router.get('/api/v1/users')

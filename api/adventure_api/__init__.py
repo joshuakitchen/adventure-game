@@ -147,7 +147,6 @@ async def play(ws: WebSocket, session: str):
         await ws.close()
     finally:
         if character:
-            character.save_character()
             character._disconnected = True
             World.remove_player(character)
 

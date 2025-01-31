@@ -25,6 +25,7 @@ class World:
                 cls._awaiting_characters.remove(character)
                 if character._cell:
                     cls.unload_cell(character._x, character._z, character)
+                character.save_character()
 
     @classmethod
     def load_cell(cls, x: int, z: int, character: 'Character'):
