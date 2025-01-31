@@ -301,6 +301,7 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+devcerts/
 
 api/data/saves/*
 api/data/adventure.db

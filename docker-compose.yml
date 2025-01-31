@@ -1,0 +1,41 @@
+services:
+  nginx:
+    image: nginx:1.26-alpine
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/templates/nginx.conf.template
+      - ${SSL_CERTS_DIR}:/etc/nginx/ssl
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      NGINX_SERVER_NAME: ${NGINX_SERVER_NAME}
+      NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx
+  db:
+    image: postgres:17.2-alpine
+    environment:
+      POSTGRES_DB: nymirith
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  api:
+    build: api
+    ports:
+      - "3001:8081"
+    depends_on:
+      - db
+    environment:
+      DB_DRIVER: postgres
+      DB_HOST: db
+      DB_USER: postgres
+      DB_DATABASE: nymirith
+      DB_PASSWORD:  ${POSTGRES_PASSWORD}
+      CLIENT_ID: ${CLIENT_ID}
+      CLIENT_SECRET: ${CLIENT_SECRET}
+  web:
+    build: web
+    ports:
+      - "3000:8080"
+    environment:
+      API_URL: http://api:8081
+      WS_URL: ws://api:8081/play
+      CLIENT_ID: ${CLIENT_ID}
+      CLIENT_SECRET: ${CLIENT_SECRET}
