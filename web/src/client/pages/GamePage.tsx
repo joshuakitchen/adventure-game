@@ -5,6 +5,9 @@ import { useNavigate } from '@solidjs/router'
 import axios from 'axios'
 import { Terminal } from '../components/Terminal'
 import { AdminModal, BugModal } from '../modals'
+
+const PING_INTERVAL = 300
+
 export const GamePage: Component = () => {
   const sessionId = crypto.randomUUID()
   console.log(sessionId)
@@ -26,6 +29,7 @@ export const GamePage: Component = () => {
   )
   const [connecting, setConnecting] = createSignal(false)
   const [pingSent, setPingSent] = createSignal(false)
+  const [missedPongs, setMissedPongs] = createSignal(0)
 
   let chatDiv: HTMLDivElement
   function sendChatText(str: string) {
@@ -44,9 +48,12 @@ export const GamePage: Component = () => {
     const prevPingAwaiting = pingSent()
     if (sock) {
       if (prevPingAwaiting) {
-        sock.close()
-        setWs(null)
-        return
+        setMissedPongs((missedPongs) => missedPongs + 1)
+        if (missedPongs() > 3) {
+          sock.close()
+          setWs(null)
+          return
+        }
       }
       sock.send(JSON.stringify({ type: 'ping', data: '' }))
       setPingSent(true)
@@ -70,7 +77,7 @@ export const GamePage: Component = () => {
       clearInterval(connectInterval())
       setConnectInterval(null)
       setConnecting(false)
-      setPingInterval(setInterval(pingSocket, 5000))
+      setPingInterval(setInterval(pingSocket, PING_INTERVAL))
     }
     ws.onmessage = ({ data }) => {
       const message = JSON.parse(data)
@@ -101,6 +108,7 @@ export const GamePage: Component = () => {
 
       // Retry connection
       if (connectInterval() === null) {
+        openWebSocket()
         setConnectInterval(setInterval(openWebSocket, 1000))
       }
     }
@@ -111,6 +119,7 @@ export const GamePage: Component = () => {
       setPingSent(false)
       setWs(null)
       if (connectInterval() === null) {
+        openWebSocket()
         setConnectInterval(setInterval(openWebSocket, 1000))
       }
     }
@@ -123,6 +132,7 @@ export const GamePage: Component = () => {
   })
 
   onMount(() => {
+    openWebSocket()
     setConnectInterval(setInterval(openWebSocket, 1000))
   })
 
