@@ -108,9 +108,11 @@ def migrate():
     elif driver == 'postgres':
         with conn.cursor() as cur:
             cur.execute("SELECT id FROM db_version ORDER BY id DESC LIMIT 1")
-            version = cur.fetchone()[0]
+            version_obj = cur.fetchone()
 
-            if not version:
+            version = version_obj[0] if version_obj else 0
+
+            if not version_obj:
                 cur.execute('''ALTER TABLE users
                             ADD COLUMN IF NOT EXISTS date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             ADD COLUMN IF NOT EXISTS last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
