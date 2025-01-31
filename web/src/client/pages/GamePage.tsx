@@ -1,4 +1,11 @@
-import { Component, createEffect, createSignal, onMount, Show } from 'solid-js'
+import {
+  Component,
+  createEffect,
+  createSignal,
+  onCleanup,
+  onMount,
+  Show,
+} from 'solid-js'
 import { FontAwesomeIcon } from 'solid-fontawesome'
 import { useUser } from '../user'
 import { useNavigate } from '@solidjs/router'
@@ -9,9 +16,6 @@ import { AdminModal, BugModal } from '../modals'
 const PING_INTERVAL = 300
 
 export const GamePage: Component = () => {
-  const sessionId = crypto.randomUUID()
-  console.log(sessionId)
-
   const navigate = useNavigate()
   const [user, setUser] = useUser()
   const [text, setText] = createSignal<string>('')
@@ -30,6 +34,8 @@ export const GamePage: Component = () => {
   const [connecting, setConnecting] = createSignal(false)
   const [pingSent, setPingSent] = createSignal(false)
   const [missedPongs, setMissedPongs] = createSignal(0)
+  const [retryConnect, setRetryConnect] = createSignal(true)
+  const [sessionId, setSessionId] = createSignal(crypto.randomUUID())
 
   let chatDiv: HTMLDivElement
   function sendChatText(str: string) {
@@ -70,7 +76,7 @@ export const GamePage: Component = () => {
     setConnecting(true)
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
     const ws = new WebSocket(
-      `${protocol}://${document.location.host}/play?session=${sessionId}`
+      `${protocol}://${document.location.host}/play?session=${sessionId()}`
     )
     setWs(ws)
     ws.onopen = () => {
@@ -83,7 +89,12 @@ export const GamePage: Component = () => {
       const message = JSON.parse(data)
       if (message.type == 'error') {
         setText((text) => text + '\x1b[31m' + message.data + '\x1b[0m\n')
+        ws.close()
         setWs(null)
+
+        if (typeof message.retry !== 'undefined') {
+          setRetryConnect(message.retry)
+        }
       } else if (message.type == 'game') {
         setText((text) => text + message.data + '\n')
       } else if (message.type === 'suggestion') {
@@ -107,9 +118,11 @@ export const GamePage: Component = () => {
       setWs(null)
 
       // Retry connection
-      if (connectInterval() === null) {
-        openWebSocket()
-        setConnectInterval(setInterval(openWebSocket, 1000))
+      if (retryConnect()) {
+        if (connectInterval() === null) {
+          openWebSocket()
+          setConnectInterval(setInterval(openWebSocket, 1000))
+        }
       }
     }
     ws.onerror = () => {
@@ -118,9 +131,11 @@ export const GamePage: Component = () => {
       setPingInterval(null)
       setPingSent(false)
       setWs(null)
-      if (connectInterval() === null) {
-        openWebSocket()
-        setConnectInterval(setInterval(openWebSocket, 1000))
+      if (retryConnect()) {
+        if (connectInterval() === null) {
+          openWebSocket()
+          setConnectInterval(setInterval(openWebSocket, 1000))
+        }
       }
     }
   }
@@ -132,8 +147,18 @@ export const GamePage: Component = () => {
   })
 
   onMount(() => {
+    console.log(`sessionId: ${sessionId()}`)
     openWebSocket()
     setConnectInterval(setInterval(openWebSocket, 1000))
+  })
+
+  onCleanup(() => {
+    clearInterval(pingInterval())
+    clearInterval(connectInterval())
+    if (ws()) {
+      setRetryConnect(false)
+      ws().close()
+    }
   })
 
   return (
@@ -203,6 +228,12 @@ export const GamePage: Component = () => {
                     data: `say ${cmd}`,
                   })
                 )
+                setInput('')
+                setSuggestion('')
+                return
+              }
+              if (cmd === 'clear') {
+                setText('')
                 setInput('')
                 setSuggestion('')
                 return

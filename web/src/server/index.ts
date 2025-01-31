@@ -10,11 +10,40 @@ import WebSocket from 'ws'
 import winston from 'winston'
 import clfDate from 'clf-date'
 import { getStaticPath } from './util.js'
+import _jwt, { Jwt } from 'jsonwebtoken'
 
 const API_URI = process.env.API_URL || 'http://localhost:8081'
 const WS_URI = process.env.WS_URL || 'ws://localhost:8081/play'
 const CLIENT_ID = process.env.CLIENT_ID
 const CLIENT_SECRET = process.env.CLIENT_SECRET
+const COOKIE_SECRET = process.env.COOKIE_SECRET
+
+const jwt = {
+  sign: (
+    data: string | Buffer | object,
+    secret: _jwt.Secret | _jwt.PrivateKey
+  ) => {
+    return new Promise<string | undefined>((resolve, reject) => {
+      _jwt.sign(data, secret, (err, token) => {
+        if (err) {
+          return reject(err)
+        }
+        resolve(token)
+      })
+    })
+  },
+  verify: (token: string, secret: _jwt.Secret | _jwt.PublicKey) => {
+    return new Promise<string | _jwt.JwtPayload>((resolve, reject) => {
+      _jwt.verify(token, secret, (err, decoded) => {
+        if (err) {
+          return reject(err)
+        }
+        resolve(decoded)
+      })
+    })
+  },
+  decode: _jwt.decode,
+}
 
 async function main() {
   const appBase = express()
@@ -46,34 +75,39 @@ async function main() {
     app.use('/assets', express.static('assets'))
   }
 
-  app.post('/login', bodyParser.json(), function _onLogin(req, res, next) {
-    axios
-      .post(
-        `${API_URI}/token`,
-        qs.stringify({
-          ...req.body,
-          client_id: CLIENT_ID,
-          client_secret: CLIENT_SECRET,
-        })
-      )
-      .then((httpRes) => {
-        res.cookie('session', {
-          ...httpRes.data,
-        })
+  app.post(
+    '/login',
+    bodyParser.json(),
+    async function _onLogin(req, res, next) {
+      try {
+        const httpRes = await axios.post(
+          `${API_URI}/token`,
+          qs.stringify({
+            ...req.body,
+            client_id: CLIENT_ID,
+            client_secret: CLIENT_SECRET,
+          })
+        )
+        const signed = await jwt.sign(
+          JSON.stringify(httpRes.data),
+          COOKIE_SECRET
+        )
+
+        res.cookie('session', signed)
         res.json({
           id: httpRes.data.user_id,
           email: httpRes.data.email,
           is_admin: httpRes.data.is_admin,
         })
-      })
-      .catch((err) => {
+      } catch (err) {
         const { response } = err
         if (!response) {
           return next(err)
         }
         res.status(response.status).json(response.data)
-      })
-  })
+      }
+    }
+  )
 
   app.post(
     '/register',
@@ -103,8 +137,7 @@ async function main() {
     res.redirect('/login')
   })
 
-  app.ws('/play', function _onPlay(ws, req, next) {
-    let query = req.url
+  app.ws('/play', async function _onPlay(ws, req, next) {
     console.log(
       `${req.ip} - - [${clfDate(new Date())}] "WS ${req.url} HTTP/${
         req.httpVersion
@@ -113,12 +146,21 @@ async function main() {
       )}" "${req.get('user-agent')}"`
     )
     winston.info(`[${req.ip}] incoming websocket connected`)
+    let sessionData
+    try {
+      sessionData = await jwt.verify(req.cookies['session'], COOKIE_SECRET)
+    } catch (err) {
+      return next(err)
+    }
+    if (!sessionData) {
+      return ws.close()
+    }
     let queryParams = req.query as any
     try {
       winston.info(`[${req.ip}] connecting to outgoing socket ${WS_URI}`)
       const proxy = new WebSocket(`${WS_URI}?${qs.stringify(queryParams)}`, {
         headers: {
-          Authorization: `Bearer ${req.cookies['session'].access_token}`,
+          Authorization: `Bearer ${sessionData.access_token}`,
         },
       })
       proxy.on('open', () => {
@@ -157,44 +199,55 @@ async function main() {
     } catch (err) {}
   })
 
-  app.all('/api/*', bodyParser.json(), function _onApi(req, res) {
+  app.all('/api/*', bodyParser.json(), async function _onApi(req, res) {
     let headers = {}
     if (req.cookies['session']) {
-      headers['Authorization'] = `Bearer ${req.cookies['session'].access_token}`
+      try {
+        const sessionData = (await jwt.verify(
+          req.cookies['session'],
+          COOKIE_SECRET
+        )) as _jwt.JwtPayload
+        headers['Authorization'] = `Bearer ${sessionData.access_token}`
+      } catch (err) {}
     }
     if (!!req.headers['content-type']) {
       headers['Content-Type'] = req.headers['content-type']
     }
-    axios({
-      method: req.method.toLowerCase(),
-      url: `${API_URI}${req.url}`,
-      data: req.body,
-      headers: headers,
-    })
-      .then((httpRes) => {
-        res.json(httpRes.data)
+    try {
+      const httpRes = await axios({
+        method: req.method.toLowerCase(),
+        url: `${API_URI}${req.url}`,
+        data: req.body,
+        headers: headers,
       })
-      .catch((err) => {
-        const { response } = err
-        if (!response) {
-          return res.status(500).json({
-            message: 'Internal Server Error',
-          })
-        }
-        res.status(response.status).json(response.data)
-      })
+      res.status(httpRes.status).json(httpRes.data)
+    } catch (err) {
+      const { response } = err
+      if (!response) {
+        return res.status(500).json({
+          message: 'Internal Server Error',
+        })
+      }
+      res.status(response.status).json(response.data)
+    }
   })
 
-  app.get('/*', function _onGet(req, res) {
+  app.get('/*', async function _onGet(req, res) {
     const params = {}
     if (req.cookies.session) {
-      params['userdata'] = btoa(
-        JSON.stringify({
-          id: req.cookies.session.user_id,
-          email: req.cookies.session.email,
-          is_admin: req.cookies.session.is_admin,
-        })
-      )
+      try {
+        const sessionData = (await jwt.verify(
+          req.cookies.session,
+          COOKIE_SECRET
+        )) as _jwt.JwtPayload
+        params['userdata'] = btoa(
+          JSON.stringify({
+            id: sessionData.user_id,
+            email: sessionData.email,
+            is_admin: sessionData.is_admin,
+          })
+        )
+      } catch (err) {}
     }
     res.render('index.html', params)
   })

@@ -47,7 +47,7 @@ const RegisterPage: Component<{}> = () => {
         />
         <div class='flex gap-3'>
           <button
-            class='w-full py-2 bg-zinc-800 hover:bg-zinc-700 ease-in-out transition-all font-mono'
+            class='w-full py-2 bg-zinc-800 hover:bg-zinc-700 ease-in-out transition-all font-mono hover:cursor-pointer'
             onClick={() => {
               navigate('/login')
             }}
@@ -61,7 +61,7 @@ const RegisterPage: Component<{}> = () => {
               !confirmPassword() ||
               password() !== confirmPassword()
             }
-            class='w-full py-2 bg-zinc-800 hover:bg-zinc-700 ease-in-out transition-all font-mono disabled:hover:cursor-not-allowed disabled:bg-zinc-900'
+            class='w-full py-2 bg-zinc-800 hover:bg-zinc-700 ease-in-out transition-all font-mono hover:cursor-pointer disabled:hover:cursor-not-allowed disabled:bg-zinc-900'
             onClick={() => {
               axios
                 .post('/register', {

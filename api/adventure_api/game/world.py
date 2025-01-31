@@ -1,10 +1,13 @@
 import asyncio
+import logging
 from datetime import datetime
 from typing import Any, ClassVar, List, Tuple, TYPE_CHECKING
 from .cell import Cell
 
 if TYPE_CHECKING:
     from .character import Character
+
+logger = logging.getLogger(__name__)
 
 
 class World:
@@ -21,11 +24,11 @@ class World:
         for cell in cls._loaded_cells:
             await cell.tick()
         for character in cls._awaiting_characters:
-            if (datetime.now() - character[1]).total_seconds() > 30:
+            if (datetime.now() - character[1]).total_seconds() > 2:
                 cls._awaiting_characters.remove(character)
-                if character._cell:
-                    cls.unload_cell(character._x, character._z, character)
-                character.save_character()
+                if character[0]._cell:
+                    cls.unload_cell(character[0]._x, character[0]._z, character[0])
+                character[0].save_character()
 
     @classmethod
     def load_cell(cls, x: int, z: int, character: 'Character'):
@@ -43,6 +46,7 @@ class World:
         cell = Cell(x, z)
         cell._characters.append(character)
         cls._loaded_cells.append(cell)
+        logging.info(f"loaded cell {x}, {z} due to player [{character._id}] [{character._name}]")
         return cell
 
     @classmethod
@@ -63,6 +67,7 @@ class World:
         loaded_cell._characters.remove(character)
         if not loaded_cell._characters:
             cls._loaded_cells.remove(loaded_cell)
+        logging.info(f"unloaded cell {x}, {z} due to player [{character._id}] [{character._name}]")
 
     @classmethod
     def get_cell(cls, x: int, z: int) -> Cell:
@@ -88,12 +93,15 @@ class World:
         """Adds a character to the world pool
 
         :param character: The character to add."""
+        existing = False
         for awaiting_character in cls._awaiting_characters:
             if awaiting_character[0]._id == character._id:
                 cls._awaiting_characters.remove(awaiting_character)
+                existing = True
                 break
         if character not in cls._characters:
             cls._characters.append(character)
+        logging.info(f"added [%s] player [{character._id}] [{character._name}] to the world", "existing" if existing else "new")
 
     @classmethod
     def remove_player(cls, character: 'Character'):
@@ -103,6 +111,7 @@ class World:
         if character in cls._characters:
             cls._characters.remove(character)
         cls._awaiting_characters.append((character, datetime.now()))
+        logging.info(f"removed player [{character._id}] [{character._name}] from the world")
     
     @classmethod
     def get_player_by_id(cls, id: int, awaiting=False) -> 'Character':
@@ -117,6 +126,7 @@ class World:
         for character in cls._characters:
             if character._id == id:
                 return character
+        return None
     
     @classmethod
     def get_player(cls, name: str, awaiting=False) -> 'Character':

@@ -89,7 +89,7 @@ async def play(ws: WebSocket, session: str):
     for loaded_character in World._characters:
         if loaded_character._id == user['id']:
             if loaded_character._session_id != session:
-                await loaded_character._ws.send_json(dict(type='error', data='You have logged in elsewhere, disconnecting.'))
+                await loaded_character._ws.send_json(dict(type='error', data='You have logged in elsewhere, please refresh to reconnect here.', retry=False))
             await loaded_character._ws.close()
             break
     character: Optional[Character] = None

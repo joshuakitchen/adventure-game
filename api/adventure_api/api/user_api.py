@@ -22,37 +22,6 @@ def fmt_sql_val(val):
         return f"'{val.isoformat()}'"
     return str(val)
 
-@user_router.get('/api/v1/db')
-async def get_db_dump(request: Request) -> Response:
-    """GET /api/v1/db
-    
-    Get a dump of the database, for migration from the app platform."""
-    user = request.user
-    if not user or not user['is_admin']:
-        raise HTTPException(403, 'You do not have permission to access this resource.')
-    
-    sql_cmd = ''
-
-    driver, conn = get_conn()
-    if driver == 'sqlite':
-        raise HTTPException(501, 'Not implemented for SQLite')
-    elif driver == 'postgres':
-        with conn.cursor() as cur:
-            cur.execute('SELECT * FROM users')
-            users = cur.fetchall()
-            for user in users:
-                sql_cmd += f"INSERT INTO users VALUES ({', '.join([fmt_sql_val(x) for x in user])});"
-                sql_cmd += '\n\n'
-            cur.execute('SELECT * FROM db_version')
-            db_version = cur.fetchall()
-            for version in db_version:
-                sql_cmd += f"INSERT INTO db_version VALUES ({', '.join([fmt_sql_val(x) for x in version])});"
-                sql_cmd += '\n\n'
-
-    return PlainTextResponse(content=sql_cmd)
-
-
-
 @user_router.get('/api/v1/users')
 async def get_users_route(request: Request):
     """GET /api/v1/users

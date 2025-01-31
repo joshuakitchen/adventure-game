@@ -1,5 +1,6 @@
 import json
 import random
+import logging
 from fastapi import WebSocket
 from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
@@ -12,6 +13,8 @@ from util import generate_id, EXP_TABLE
 
 if TYPE_CHECKING:
     from .cell import Cell
+
+logger = logging.getLogger(__name__)
 
 TITLE = ''' _  _            _     _ _   _
 | \\| |_  _ _ __ (_)_ _(_) |_| |_
@@ -370,6 +373,7 @@ class Character:
                     'UPDATE users SET name = %s, x = %s, z = %s, state = %s, additional_data = %s WHERE id = %s', [
                         self._name, self._x, self._z, self._state, self.to_json(), self._id])
                 conn.commit()
+        logger.info('saved character [%s] [%s]', self._id, self._name)
 
     def get_skill_level(self, name: str) -> int:
         return self._skills.get(name, (1, 0))[0]

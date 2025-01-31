@@ -50,7 +50,7 @@ const LoginPage: Component = () => {
         />
         <div class='flex gap-3'>
           <button
-            class='w-full py-2 bg-zinc-800 hover:bg-zinc-700 ease-in-out transition-all font-mono'
+            class='w-full py-2 bg-zinc-800 hover:bg-zinc-700 ease-in-out transition-all font-mono hover:cursor-pointer'
             onClick={(e) => {
               axios
                 .post('/login', {
@@ -72,7 +72,7 @@ const LoginPage: Component = () => {
             Login
           </button>
           <button
-            class='w-full py-2 bg-zinc-800 hover:bg-zinc-700 ease-in-out transition-all font-mono'
+            class='w-full py-2 bg-zinc-800 hover:bg-zinc-700 ease-in-out transition-all font-mono hover:cursor-pointer'
             onClick={() => {
               navigate('/register')
             }}
