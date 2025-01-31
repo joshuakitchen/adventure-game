@@ -113,9 +113,10 @@ async function main() {
       )}" "${req.get('user-agent')}"`
     )
     winston.info(`[${req.ip}] incoming websocket connected`)
+    let queryParams = req.query as any
     try {
       winston.info(`[${req.ip}] connecting to outgoing socket ${WS_URI}`)
-      const proxy = new WebSocket(`${WS_URI}?${qs.stringify(req.query)}`, {
+      const proxy = new WebSocket(`${WS_URI}?${qs.stringify(queryParams)}`, {
         headers: {
           Authorization: `Bearer ${req.cookies['session'].access_token}`,
         },
