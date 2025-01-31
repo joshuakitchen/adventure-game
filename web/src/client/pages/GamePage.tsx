@@ -39,10 +39,27 @@ export const GamePage: Component = () => {
     }
   }
 
+  const pingSocket = () => {
+    let sock = ws()
+    const prevPingAwaiting = pingSent()
+    if (sock) {
+      if (prevPingAwaiting) {
+        sock.close()
+        setWs(null)
+        return
+      }
+      sock.send(JSON.stringify({ type: 'ping', data: '' }))
+      setPingSent(true)
+    }
+  }
+
   const openWebSocket = () => {
     if (connecting()) {
       return
     }
+    clearInterval(pingInterval())
+    setPingInterval(null)
+    setPingSent(false)
     setConnecting(true)
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
     const ws = new WebSocket(
@@ -53,6 +70,7 @@ export const GamePage: Component = () => {
       clearInterval(connectInterval())
       setConnectInterval(null)
       setConnecting(false)
+      setPingInterval(setInterval(pingSocket, 5000))
     }
     ws.onmessage = ({ data }) => {
       const message = JSON.parse(data)
@@ -75,55 +93,37 @@ export const GamePage: Component = () => {
       }
     }
     ws.onclose = () => {
+      setConnecting(false)
       clearInterval(pingInterval())
       setPingInterval(null)
+      setPingSent(false)
       setWs(null)
-    }
-  }
 
-  createEffect(() => {
-    const webSocket = ws()
-    if (webSocket && webSocket.readyState === WebSocket.OPEN) {
-      setPingInterval(
-        setInterval(() => {
-          if (pingSent()) {
-            ws().close()
-            clearInterval(pingInterval())
-            setPingInterval(null)
-            setWs(null)
-            setPingSent(false)
-            return
-          }
-          if (ws() && ws().readyState !== WebSocket.OPEN) {
-            setPingInterval(null)
-            return
-          }
-          ws().send(JSON.stringify({ type: 'ping', data: '' }))
-          setPingSent(true)
-        }, 5000)
-      )
-    } else if (
-      !webSocket ||
-      (webSocket.readyState !== WebSocket.OPEN && !connecting())
-    ) {
+      // Retry connection
       if (connectInterval() === null) {
-        openWebSocket()
-        setConnectInterval(
-          setInterval(() => {
-            if (connecting()) {
-              return
-            }
-            openWebSocket()
-          }, 1000 * Math.min(30, Math.pow(2, retries())))
-        )
+        setConnectInterval(setInterval(openWebSocket, 1000))
       }
     }
-  })
+    ws.onerror = () => {
+      setConnecting(false)
+      clearInterval(pingInterval())
+      setPingInterval(null)
+      setPingSent(false)
+      setWs(null)
+      if (connectInterval() === null) {
+        setConnectInterval(setInterval(openWebSocket, 1000))
+      }
+    }
+  }
 
   createEffect(() => {
     if (!user.id) {
       navigate('/login')
     }
+  })
+
+  onMount(() => {
+    setConnectInterval(setInterval(openWebSocket, 1000))
   })
 
   return (
