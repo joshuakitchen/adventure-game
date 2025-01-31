@@ -78,7 +78,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
 
 @app.websocket('/play')
-async def play(ws: WebSocket):
+async def play(ws: WebSocket, session: str):
     await ws.accept()
     user = ws.user
     if not user:
@@ -86,50 +86,59 @@ async def play(ws: WebSocket):
         await ws.close()
         return
     logging.info('user [%s] connected', user['id'])
-    ready = False
     for loaded_character in World._characters:
         if loaded_character._id == user['id']:
-            await loaded_character._ws.send_json(dict(type='error', data='You have logged in elsewhere, disconnecting.'))
+            if loaded_character._session_id != session:
+                await loaded_character._ws.send_json(dict(type='error', data='You have logged in elsewhere, disconnecting.'))
             await loaded_character._ws.close()
             break
     character: Optional[Character] = None
     try:
+        character = World.get_player_by_id(user['id'], True)
+        if not character:
+            character = Character(user['id'], ws, session)
+            if character.name:
+                await World.send_to_all('chat', '@lgr@{}@res@ has just logged in.\n', character.name)
+            World.add_player(character)
+            await character.handle_login()
+        else:
+            continue_session = character._session_id == session
+            character._ws = ws
+            character._session_id = session
+            character._disconnected = False
+            World.add_player(character)
+            if continue_session:
+                await character.handle_login(send_motd=False)
+            else:
+                await character.handle_login()
+
         while True:
             data = await ws.receive_json()
-            if data['type'] == 'ready' and not ready:
-                ready = True
-                character = Character(user['id'], ws)
-                if character.name:
-                    await World.send_to_all(
-                        'chat', '@lgr@{}@res@ has just logged in.\n', character.name)
-                World.add_player(character)
-                await character.handle_login()
-            elif ready and character:
-                try:
-                    command = shlex.split(data['data'])
-                except ValueError:
-                    command = data['data'].split(" ")
-                except KeyError:
-                    command = ['']
-                if len(data['data']) > 0 and data['data'].split(' ')[-1] == '':
-                    command.append('')
-                if data['type'] == 'autocomplete_suggest':
-                    suggestion = character.command_handler.get_suggestion(
-                        command)
-                    await ws.send_json(dict(type='suggestion', data=suggestion))
-                elif data['type'] == 'autocomplete_get':
-                    suggestion = character.command_handler.get_suggestion(
-                        command,
-                        True)
-                    await ws.send_json(dict(type='autocomplete', data=suggestion))
-                elif data['type'] == 'game':
-                    logger.info(
-                        'handling command [%s] for [%s]',
-                        data['data'],
-                        character._name)
-                    await character.command_handler.handle_input(command)
-                elif data['type'] == 'ping':
-                    await ws.send_json(dict(type='pong', data=''))
+            try:
+                command = shlex.split(data['data'])
+            except ValueError:
+                command = data['data'].split(" ")
+            except KeyError:
+                command = ['']
+            if len(data['data']) > 0 and data['data'].split(' ')[-1] == '':
+                command.append('')
+            if data['type'] == 'autocomplete_suggest':
+                suggestion = character.command_handler.get_suggestion(
+                    command)
+                await ws.send_json(dict(type='suggestion', data=suggestion))
+            elif data['type'] == 'autocomplete_get':
+                suggestion = character.command_handler.get_suggestion(
+                    command,
+                    True)
+                await ws.send_json(dict(type='autocomplete', data=suggestion))
+            elif data['type'] == 'game':
+                logger.info(
+                    'handling command [%s] for [%s]',
+                    data['data'],
+                    character._name)
+                await character.command_handler.handle_input(command)
+            elif data['type'] == 'ping':
+                await ws.send_json(dict(type='pong', data=''))
     except WebSocketDisconnect:
         logging.info('websocket [%s] disconnected', user['id'])
     except Exception as e:
@@ -139,6 +148,7 @@ async def play(ws: WebSocket):
     finally:
         if character:
             character.save_character()
+            character._disconnected = True
             World.remove_player(character)
 
 is_running = True

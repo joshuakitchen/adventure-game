@@ -1,5 +1,6 @@
 import asyncio
-from typing import Any, ClassVar, List, TYPE_CHECKING
+from datetime import datetime
+from typing import Any, ClassVar, List, Tuple, TYPE_CHECKING
 from .cell import Cell
 
 if TYPE_CHECKING:
@@ -10,6 +11,7 @@ class World:
     """The World is an instance which contains all the players currently
     connected to this world."""
     _characters: ClassVar[List['Character']]
+    _awaiting_characters: ClassVar[List[Tuple['Character', datetime]]]
     _loaded_cells: ClassVar[List[Cell]]
 
     @classmethod
@@ -18,6 +20,11 @@ class World:
         useful in the game world."""
         for cell in cls._loaded_cells:
             await cell.tick()
+        for character in cls._awaiting_characters:
+            if (datetime.now() - character[1]).total_seconds() > 30:
+                cls._awaiting_characters.remove(character)
+                if character._cell:
+                    cls.unload_cell(character._x, character._z, character)
 
     @classmethod
     def load_cell(cls, x: int, z: int, character: 'Character'):
@@ -80,6 +87,10 @@ class World:
         """Adds a character to the world pool
 
         :param character: The character to add."""
+        for awaiting_character in cls._awaiting_characters:
+            if awaiting_character[0]._id == character._id:
+                cls._awaiting_characters.remove(awaiting_character)
+                break
         if character not in cls._characters:
             cls._characters.append(character)
 
@@ -88,15 +99,34 @@ class World:
         """Removes a character from the world pool.
 
         :param character: The character to remove."""
-        cls._characters.remove(character)
-        if character._cell:
-            cls.unload_cell(character._x, character._z, character)
+        if character in cls._characters:
+            cls._characters.remove(character)
+        cls._awaiting_characters.append((character, datetime.now()))
     
     @classmethod
-    def get_player(cls, name: str) -> 'Character':
+    def get_player_by_id(cls, id: int, awaiting=False) -> 'Character':
+        """Gets a player by their id.
+
+        :param id: The id of the player.
+        :param awaiting: Whether to include awaiting characters."""
+        if awaiting:
+            for character in cls._awaiting_characters:
+                if character[0]._id == id:
+                    return character[0]
+        for character in cls._characters:
+            if character._id == id:
+                return character
+    
+    @classmethod
+    def get_player(cls, name: str, awaiting=False) -> 'Character':
         """Gets a player by their name.
 
-        :param name: The name of the player."""
+        :param name: The name of the player.
+        :param awaiting: Whether to include awaiting characters."""
+        if awaiting:
+            for character in cls._awaiting_characters:
+                if character[0]._name == name:
+                    return character
         for character in cls._characters:
             if character._name == name:
                 return character
@@ -104,4 +134,5 @@ class World:
 
 
 World._characters = []
+World._awaiting_characters = []
 World._loaded_cells = []

@@ -5,24 +5,25 @@ import { useNavigate } from '@solidjs/router'
 import axios from 'axios'
 import { Terminal } from '../components/Terminal'
 import { AdminModal, BugModal } from '../modals'
-
 export const GamePage: Component = () => {
+  const sessionId = crypto.randomUUID()
+  console.log(sessionId)
+
   const navigate = useNavigate()
   const [user, setUser] = useUser()
-  const [ws, setWs] = createSignal<WebSocket>()
   const [text, setText] = createSignal<string>('')
   const [suggestion, setSuggestion] = createSignal<string>('')
   const [input, setInput] = createSignal<string>('')
   const [chatText, setChatText] = createSignal<string>('')
   const [chatInput, setChatInput] = createSignal<string>('')
-  const [ready, setReady] = createSignal(false)
   const [adminModal, setAdminModal] = createSignal(false)
+
+  const [ws, setWs] = createSignal<WebSocket>()
   const [retries, setRetries] = createSignal(0)
   const [pingInterval, setPingInterval] = createSignal<number | null>(null)
   const [connectInterval, setConnectInterval] = createSignal<number | null>(
     null
   )
-  const [readyInterval, setReadyInterval] = createSignal<number | null>(null)
   const [connecting, setConnecting] = createSignal(false)
   const [pingSent, setPingSent] = createSignal(false)
 
@@ -44,53 +45,25 @@ export const GamePage: Component = () => {
     }
     setConnecting(true)
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    const ws = new WebSocket(`${protocol}://${document.location.host}/play`)
+    const ws = new WebSocket(
+      `${protocol}://${document.location.host}/play?session=${sessionId}`
+    )
     setWs(ws)
     ws.onopen = () => {
       clearInterval(connectInterval())
       setConnectInterval(null)
       setConnecting(false)
-      setReadyInterval(
-        setInterval(() => {
-          if (ws.readyState !== WebSocket.OPEN) {
-            clearInterval(readyInterval())
-            return
-          }
-          ws.send(JSON.stringify({ type: 'ready', data: '' }))
-        }, 100)
-      )
     }
     ws.onmessage = ({ data }) => {
       const message = JSON.parse(data)
       if (message.type == 'error') {
         setText((text) => text + '\x1b[31m' + message.data + '\x1b[0m\n')
         setWs(null)
-        setReady(false)
-        clearInterval(readyInterval())
-        setReadyInterval(null)
       } else if (message.type == 'game') {
         setText((text) => text + message.data + '\n')
-        if (!ready()) {
-          clearInterval(readyInterval())
-          setReadyInterval(null)
-          sendChatText(
-            '\x1b[92mYou are connected to the global chat channel.\x1b[0m\n'
-          )
-          setReady(true)
-        }
       } else if (message.type === 'suggestion') {
         setSuggestion(message.data)
-        if (!ready()) {
-          clearInterval(readyInterval())
-          setReadyInterval(null)
-          sendChatText(
-            '\x1b[92mYou are connected to the global chat channel.\x1b[0m\n'
-          )
-          setReady(true)
-        }
       } else if (message.type === 'autocomplete') {
-        clearInterval(readyInterval())
-        setReadyInterval(null)
         if (message.data.length > 0) {
           setInput(message.data)
           setSuggestion('')
@@ -104,25 +77,19 @@ export const GamePage: Component = () => {
     ws.onclose = () => {
       clearInterval(pingInterval())
       setPingInterval(null)
-      setReady(false)
-      clearInterval(readyInterval())
-      setReadyInterval(null)
       setWs(null)
     }
   }
 
   createEffect(() => {
     const webSocket = ws()
-    if (webSocket && ready()) {
+    if (webSocket && webSocket.readyState === WebSocket.OPEN) {
       setPingInterval(
         setInterval(() => {
           if (pingSent()) {
             ws().close()
             clearInterval(pingInterval())
             setPingInterval(null)
-            setReady(false)
-            clearInterval(readyInterval())
-            setReadyInterval(null)
             setWs(null)
             setPingSent(false)
             return
@@ -139,8 +106,8 @@ export const GamePage: Component = () => {
       !webSocket ||
       (webSocket.readyState !== WebSocket.OPEN && !connecting())
     ) {
-      setReady(false)
       if (connectInterval() === null) {
+        openWebSocket()
         setConnectInterval(
           setInterval(() => {
             if (connecting()) {

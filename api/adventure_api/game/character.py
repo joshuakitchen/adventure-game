@@ -37,6 +37,7 @@ class Character:
     _id: str
     _instance_id: str
     _ws: WebSocket
+    _session_id: str
     _state: str
     _name: Optional[str]
     _x: int
@@ -49,8 +50,9 @@ class Character:
     _skills: Dict[str, Tuple[int, int]]
     _command_handler: CommandHandler
     _target: Optional[str]
+    _disconnected: bool
 
-    def __init__(self, id: str, ws: WebSocket):
+    def __init__(self, id: str, ws: WebSocket, session_id: str):
         """Constructs the Character
 
         :param id: The user id.
@@ -58,6 +60,8 @@ class Character:
         self._id = id
         self._instance_id = generate_id(0)
         self._ws = ws
+        self._session_id = session_id
+        self._disconnected = False
         self._state = 'intro'
         self._name = None
         self._x = 0
@@ -79,14 +83,18 @@ class Character:
         self.load_character()
         self.set_state(self._state)
 
-    async def handle_login(self):
+    async def handle_login(self, send_motd: bool = True):
         """Handles the character entering the world, this will take place just
         after the WebSocket connection and should provide either an introduction
         for new players, or an update for old players."""
         if self._state == 'intro':
-            await self.send_message('game', INTRODUCTION_TEXT, TITLE, 'test')
+            if send_motd:
+                await self.send_message('game', INTRODUCTION_TEXT, TITLE, 'test')
+                await self.send_message('chat', '@lgr@You are connected to the global chat channel.@res@\n')
         else:
-            await self.send_message('game', '{}\n\nWelcome back, @lgr@{}@res@.\n\n', TITLE, self._name)
+            if send_motd:
+                await self.send_message('game', '{}\n\nWelcome back, @lgr@{}@res@.\n\n', TITLE, self._name)
+                await self.send_message('chat', '@lgr@You are connected to the global chat channel.@res@\n')
             self._cell = World.load_cell(self._x, self._z, self)
 
     async def handle_logout(self):
@@ -238,6 +246,8 @@ class Character:
         :param message: The message to send.
         :param *args: Formats the message with the given arguments.
         :param **kwargs: Formats the message with the given kwargs."""
+        if self._ws is None or self._ws.client_state.value != 1:
+            return
         message = replace_colors(message.format(*args, **kwargs))
         await self._ws.send_json(dict(type=type, data=message))
 

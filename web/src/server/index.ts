@@ -104,8 +104,9 @@ async function main() {
   })
 
   app.ws('/play', function _onPlay(ws, req, next) {
+    let query = req.url
     console.log(
-      `${req.ip} - - [${clfDate(new Date())}] "WS ${req.path} HTTP/${
+      `${req.ip} - - [${clfDate(new Date())}] "WS ${req.url} HTTP/${
         req.httpVersion
       }" 101 - "${req.protocol === 'http' ? 'ws' : 'wss'}://${req.get(
         'host'
@@ -114,7 +115,7 @@ async function main() {
     winston.info(`[${req.ip}] incoming websocket connected`)
     try {
       winston.info(`[${req.ip}] connecting to outgoing socket ${WS_URI}`)
-      const proxy = new WebSocket(WS_URI, {
+      const proxy = new WebSocket(`${WS_URI}?${qs.stringify(req.query)}`, {
         headers: {
           Authorization: `Bearer ${req.cookies['session'].access_token}`,
         },
