@@ -26,7 +26,7 @@ INTRODUCTION_TEXT = '''{}
 
 Welcome to the world of Nymirith.
 
-Type "begin" followed by your character name to start.
+Type "@lbl@begin@res@" followed by your character name to start.
 \n\n'''
 
 
@@ -96,7 +96,7 @@ class Character:
                 await self.send_message('chat', '@lgr@You are connected to the global chat channel.@res@\n')
         else:
             if send_motd:
-                await self.send_message('game', '{}\n\nWelcome back, @lgr@{}@res@.\n\n', TITLE, self._name)
+                await self.send_message('game', '{}\n\nWelcome back, @lgr@{}@res@.\nType \"@lbl@help@res@\" to see available commands.\n\n', TITLE, self._name)
                 await self.send_message('chat', '@lgr@You are connected to the global chat channel.@res@\n')
             self._cell = World.load_cell(self._x, self._z, self)
 

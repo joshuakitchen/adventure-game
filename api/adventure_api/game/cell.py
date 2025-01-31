@@ -168,6 +168,14 @@ class Cell:
         self._enemies.remove(e)
 
     @property
+    def description(self) -> str:
+        desc = self.data.get('description', {'base': []})
+        base = desc.get('base', [])
+
+        rng = random.Random((self._x << 16) + self._z)
+        return rng.choice(base)
+
+    @property
     def can_scavenge(self) -> bool:
         return self._get_scavenge_list is not None
 

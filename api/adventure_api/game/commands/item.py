@@ -11,7 +11,8 @@ class ItemCommands:
     async def inventory(self, c: 'Character'):
         """Checks your current inventory.
 
-        :command_summary: Check your inventory."""
+        :command_summary: Check your inventory.
+        :command_category: Inventory"""
         if not c.inventory:
             await c.send_message('game', 'You have nothing in your inventory with {} free slots.\n', c.free_slots)
             return
@@ -21,10 +22,13 @@ class ItemCommands:
 
     @command
     async def drop(self, c: 'Character', item: str):
-        """Drops an item from your inventory.
+        """Drops an item from your inventory to the current cell.
+
+        If you want to drop every item you can use the keyword 'all'.
 
         :command_summary: Drops an item from your inventory.
-        :command_param_type item: inventory"""
+        :command_param_type item: inventory
+        :command_category: Inventory"""
         if item == 'all':
             count = len(c.inventory)
             for i in range(count):
@@ -51,7 +55,8 @@ class ItemCommands:
         """Inspects an item in your inventory.
         
         :command_summary: Inspects an item in your inventory.
-        :command_param_type item: inventory"""
+        :command_param_type item: inventory
+        :command_category: Inventory"""
         for i in c.inventory:
             if i['name'] == item:
                 await c.send_message('game', 'You inspect the @yel@{}@res@ and find:\n{}\n', item, i['description'])

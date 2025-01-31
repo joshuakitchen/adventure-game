@@ -11,7 +11,8 @@ class CharacterCommands:
     async def stats(self, character: 'Character') -> str:
         """Displays the character's stats.
 
-        :command_summary: Display character stats."""
+        :command_summary: Display character stats.
+        :command_category: Character"""
         stat_display = "Name: {}\nFaction: {}\n\n".format(character.name, character.faction);
         stat_display += "Constitution: {}/{}\n".format(character._hp, character._attributes["constitution"][0])
         stat_display += "Strength: {}\n".format(character._attributes["strength"][0])
@@ -25,7 +26,8 @@ class CharacterCommands:
     async def statbox(self, character: 'Character') -> str:
         """Displays the character's stats in a box.
 
-        :command_summary: Display character stats."""
+        :command_summary: Display character stats in a box.
+        :command_category: Character"""
         attrs = []
         attrs.append(f'Constitution: {character._attributes["constitution"][0]}')
         attrs.append(f'Strength: {character._attributes["strength"][0]}')

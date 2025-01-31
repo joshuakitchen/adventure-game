@@ -18,7 +18,8 @@ class WorldCommands:
     async def survey(self, c: 'Character', cell: 'Cell'):
         """Surveying maps the immediate surrounding area and shows it the player.
 
-        :command_summary: Maps the surrounding area."""
+        :command_summary: Maps the surrounding area.
+        :command_category: Movement"""
         biome_map = ''
         population_map = ''
 
@@ -40,14 +41,15 @@ class WorldCommands:
         entity_names: List[str] = [f'@lgr@{e.name}@res@' for e in cell.characters if e is not c] + \
             [f'@red@{e.name}@res@' for e in cell.enemies] + \
             [f'@yel@{e["name"]}@res@' for e in cell.items]
-        await c.send_message('game', 'You survey the surrounding area.\nMap:      Pop.:\n{}You can see:\n{}\n', map_display, '\n'.join(entity_names))
+        await c.send_message('game', 'You survey the surrounding area.\n\n{}\n\nMap:      Pop.:\n{}You can see:\n{}\n', cell.description, map_display, '\n'.join(entity_names))
 
     @command
     async def pickup(self, c: 'Character', item: str):
         """Picks up an item from the local area.
 
         :command_summary: Picks up an item from the local area.
-        :command_param_type item: item"""
+        :command_param_type item: item
+        :command_category: Interaction"""
         i_idx = -1
         for idx, i in enumerate(c._cell.items):
             if i['name'] == item:
@@ -66,14 +68,16 @@ class WorldCommands:
         in, generates items. It is useful for getting essential items but won't
         get you anything too rare.
 
-        :command_summary: Scavenges the local are for items."""
+        :command_summary: Scavenges the local are for items.
+        :command_category: Interaction"""
         await character.set_action('scavenge')
 
     @command
     async def stop(self, character: 'Character'):
         """Stops the current action which is being taken.
 
-        :command_summary: Stops the current action."""
+        :command_summary: Stops the current action.
+        :command_category: Interaction"""
         await character.set_action(None)
 
     @command
@@ -83,7 +87,8 @@ class WorldCommands:
         The player cannot move onto sea or mountain nodes.
 
         :command_summary: Moves the player in the direction specified.
-        :command_param_type direction: direction"""
+        :command_param_type direction: direction
+        :command_category: Movement"""
         available_directions: List[str] = []
         if World.get_cell(c._x - 1, c._z)._biome not in IMMOVABLE_BIOMES:
             available_directions.append('west')
@@ -116,7 +121,8 @@ class WorldCommands:
 
         :command_summary: Looks at the given target and gives a description.
         :command_param_type target: target
-        :command_param_type ordinal: target_ordinal"""
+        :command_param_type ordinal: target_ordinal
+        :command_category: Interaction"""
         if ordinal is not None:
             try:
                 ordinal_int = int(ordinal) - 1

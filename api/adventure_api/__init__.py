@@ -167,6 +167,11 @@ async def loop():
         except Exception as e:
             logger.error(f'error occurred in game loop')
             logger.exception(e)
+    logger.info('saving awaiting characters loop')
+    for c in World._characters:
+        c.save_character()
+    for c in World._awaiting_characters:
+        c[0].save_character()
     logger.info('ending game loop')
 
 thread = threading.Thread(target=lambda: asyncio.run(loop()))

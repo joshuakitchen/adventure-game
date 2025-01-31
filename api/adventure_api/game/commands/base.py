@@ -28,18 +28,21 @@ def _parse_documentation(fn: Callable):
         return dict(
             desc=desc, summary='This command has no summary.', params=[])
     desc, args_string = doc.split(':', 1)
-    desc = '\n'.join([line.strip() for line in doc.split('\n')])
+    desc = '\n'.join([line.strip() for line in desc.split('\n')]).strip()
     args = [(k.split(' '), v)
             for k, v, _ in re.findall(DOC_STRING, ':' + args_string)]
     summary = 'This command has no summary.'
+    category = 'Misc'
     params = []
     for arg in args:
         arg_type = arg[0][0]
         if arg_type == 'command_summary':
             summary = arg[1]
+        elif arg_type == 'command_category':
+            category = arg[1]
         elif arg_type == 'command_param_type':
             params.append(arg[1].split(','))  # type: ignore
-    return dict(desc=desc, summary=summary, params=params)
+    return dict(desc=desc, summary=summary, category=category, params=params)
 
 
 def _parse_command_help_params(f, doc):
@@ -296,6 +299,18 @@ class CommandHandler:
             for alias, cmd in v(handler)
         }
         return fns
+    
+    def get_command(self, command: str):
+        """Returns the command data for the given command."""
+        fns = [
+            getattr(v, '__command__')
+            for handler in self._handlers
+            for k, v in handler.__class__.__dict__.items()
+            if getattr(v, '__command__', None) is not None
+        ]
+        fn = next(iter([f for f in fns if f['func'].__name__ == command]), None)
+        print(fn)
+        return fn
 
     def get_command_list(self):
         """Returns a list of all the commands."""

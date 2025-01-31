@@ -1,5 +1,14 @@
 {
   "plains": {
+    "description": {
+      "base": [
+        "You are in a vast open plain. The grass stretches endlessly in all directions, swaying gently in the breeze.",
+        "You are in a wide, open plain. The sun hangs high overhead, bathing the rolling fields in warm light.",
+        "You are in a sprawling grassland. Wildflowers dot the landscape, adding splashes of color to the sea of green.",
+        "You are in a windy plain. The tall grass rustles as a steady breeze moves across the open land.",
+        "You are in a peaceful plain. The horizon seems endless, broken only by the occasional lone tree or wandering animal."
+      ]
+    },
     "scavenge": [
       ["rock", {"shape": "smooth"}],
       ["rock", {"shape": "pointy"}]
@@ -9,6 +18,14 @@
     ]
   },
   "forest": {
+    "description": {
+      "base": [
+        "You are in a dense forest. The trees are tall and the canopy is thick, blocking out most of the sunlight.",
+        "You are in a dense forest. There are trees all around you, their branches reaching out to the sky.",
+        "You are in a dense forest. The ground is covered in leaves and twigs, and the air is filled with the sound of birds chirping.",
+        "You are in a dense forest. The trees are so close together that it's hard to see more than a few feet in any direction."
+      ]
+    },
     "scavenge": [
       ["rock", {"shape": "smooth"}],
       ["rock", {"shape": "pointy"}],

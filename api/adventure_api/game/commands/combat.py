@@ -10,11 +10,16 @@ class CombatCommands:
 
     @command
     async def attack(self, c: 'Character', cell: 'Cell', target, ordinal=None):
-        """Begins attacking a target.
+        """Starts an attack against the target, attacks are automatic and happen
+        every attack cycle.
+        
+        Type 'stop' to stop attacking the target, but be warned, the target may
+        continue to attack you.
 
         :command_summary: Start attacking an enemy.
         :command_param_type target: target
-        :command_param_type ordinal: target_ordinal"""
+        :command_param_type ordinal: target_ordinal
+        :command_category: Combat"""
         if ordinal is not None:
             try:
                 ordinal_int = int(ordinal) - 1
@@ -24,9 +29,6 @@ class CombatCommands:
         targets = cell.find(target)
         if not targets:
             await c.send_message('game', '@red@Target could not be found.@res@\n')
-            return
-        if len(targets) > 1 and ordinal is None:
-            await c.send_message('game', '@red@Multiple targets found, please specify which using attack [enemy] [number]@res@\n')
             return
         if ordinal is None:
             ordinal_int = 0

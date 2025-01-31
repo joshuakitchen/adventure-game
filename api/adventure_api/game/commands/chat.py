@@ -12,7 +12,10 @@ class ChatCommands:
     @command
     async def say(self, c: 'Character', *message):
         """Says something in the chat, currently only the global chat channel
-        exists."""
+        exists.
+        
+        :command_summary: Say something in the chat.
+        :command_category: Interaction"""
         if not c._cell:
             return
         message_str = ' '.join(message)
