@@ -224,9 +224,10 @@ async function main() {
     } catch (err) {
       const { response } = err
       if (!response) {
-        return res.status(500).json({
+        res.status(500).json({
           message: 'Internal Server Error',
         })
+        return
       }
       res.status(response.status).json(response.data)
     }
