@@ -82,3 +82,33 @@ async def put_user_route(user_id: str, put_req: PutUserRequest, request: Request
     user = get_user_by_id(user_id)
 
     return user
+
+@user_router.get('/api/v1/chatlog')
+async def get_chatlog_route(request: Request):
+    """GET /api/v1/chatlog
+
+    Get the chat log.
+    """
+    user = request.user
+    if not user or not user['is_admin']:
+        raise HTTPException(403, 'You do not have permission to access this resource.')
+    driver, conn = get_conn()
+    if driver == 'sqlite':
+        cur = conn.cursor()
+        cur.execute('SELECT chatlog.id, user_id, message, timestamp, users.name FROM chatlog INNER JOIN users ON chatlog.user_id = users.id ORDER BY timestamp DESC')
+        chatlog = cur.fetchall()
+        cur.close()
+    elif driver == 'postgres':
+        cur = conn.cursor()
+        cur.execute('SELECT chatlog.id, user_id, message, timestamp, users.name FROM chatlog INNER JOIN users ON chatlog.user_id = users.id ORDER BY timestamp DESC')
+        chatlog = cur.fetchall()
+        cur.close()
+    
+    chatlog = [
+        dict(id=c[0], user=dict(id=c[1], name=c[4]), message=c[2], timestamp=c[3]) for c in chatlog
+    ]
+
+    return {
+        'data': chatlog,
+        'total': len(chatlog)
+    }

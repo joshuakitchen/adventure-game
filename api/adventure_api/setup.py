@@ -67,6 +67,33 @@ def create_user_table():
                 )''')
         conn.commit()
 
+
+def create_chatlog_table():
+    """Creates the chatlog table if it doesn't exist"""
+    driver, conn = get_conn()
+    if driver == 'sqlite':
+        try:
+            conn.execute(
+                '''CREATE TABLE IF NOT EXISTS chatlog (
+                id VARCHAR(36) PRIMARY KEY,
+                user_id VARCHAR(36) NOT NULL,
+                message TEXT NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )'''
+                )
+            conn.commit()
+        finally:
+            conn.close()
+    elif driver == 'postgres':
+        with conn.cursor() as cur:
+            cur.execute('''CREATE TABLE IF NOT EXISTS chatlog (
+                id VARCHAR(36) PRIMARY KEY,
+                user_id VARCHAR(36) NOT NULL,
+                message TEXT NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )''')
+        conn.commit()
+
 def create_audit_table():
     """Creates the audit table if it doesn't exist"""
     driver, conn = get_conn()
@@ -127,7 +154,8 @@ def migrate():
 
 
 def setup_database():
-    create_user_table()
     create_version_table()
+    create_user_table()
+    create_chatlog_table()
 
     migrate()
