@@ -1,16 +1,26 @@
 import axios from 'axios'
 import { FontAwesomeIcon } from 'solid-fontawesome'
 import {
+  children,
   Component,
   createEffect,
   createSignal,
   For,
+  JSX,
+  Match,
   onMount,
+  ParentProps,
   Show,
+  Switch,
 } from 'solid-js'
 import { createStore } from 'solid-js/store'
 import { Portal } from 'solid-js/web'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
 import { Table } from '../components'
+import { cx } from '../util'
+
+dayjs.extend(relativeTime)
 
 type UserData = {
   id: string
@@ -122,8 +132,73 @@ const UserPage: Component<{ user_id: string }> = (props) => {
   )
 }
 
-export const AdminModal: Component<{
-  visible?: boolean
+const TabContent: Component<
+  ParentProps<{ icon: string; title: string }> &
+    JSX.HTMLAttributes<HTMLDivElement>
+> = (props) => {
+  return (
+    <div data-icon={props.icon} data-title={props.title} {...props}>
+      {props.children}
+    </div>
+  )
+}
+
+const Tab: Component<ParentProps<{}>> & {
+  Content: typeof TabContent
+} = (props) => {
+  const [tabs, setTabs] = createSignal<
+    Array<{ icon: string; title: string; element: Element }>
+  >([])
+  const [tab, setTab] = createSignal<number>(0)
+  const c = children(() => props.children)
+  createEffect(() => {
+    const child = c()
+    if (child instanceof Element) {
+      setTabs([
+        {
+          icon: child.getAttribute('data-icon'),
+          title: child.getAttribute('data-title'),
+          element: child,
+        },
+      ])
+    } else if (child instanceof Array) {
+      setTabs(
+        child.map((child: Element) => ({
+          icon: child.getAttribute('data-icon'),
+          title: child.getAttribute('data-title'),
+          element: child,
+        }))
+      )
+    }
+  })
+  return (
+    <>
+      <div class='flex'>
+        <For each={tabs()}>
+          {(child, idx) => (
+            <a
+              class={cx(
+                'max-md:text-center p-4 flex-1 bg-zinc-800 md:first:rounded-tl-md md:last:rounded-tr-md hover:bg-zinc-700 cursor-pointer transition-colors',
+                {
+                  'bg-zinc-700': tab() === idx(),
+                }
+              )}
+              onClick={() => setTab(idx())}
+            >
+              <FontAwesomeIcon icon={child.icon} className='pr-4' />
+              <span class='max-md:hidden'>{child.title}</span>
+            </a>
+          )}
+        </For>
+      </div>
+      <Show when={tabs()[tab()]}>{tabs()[tab()].element}</Show>
+    </>
+  )
+}
+
+Tab.Content = TabContent
+
+const UserTab: Component<{
   onClose?: () => void
 }> = (props) => {
   const [userData, setUserData] = createStore<{ users: Array<UserData> }>({
@@ -131,86 +206,154 @@ export const AdminModal: Component<{
   })
   const [selectedUser, setSelectedUser] = createSignal<string>()
 
-  createEffect(() => {
-    if (!props.visible) return
+  onMount(() => {
     axios.get('/api/v1/users').then((response) => {
       setUserData('users', response.data.data)
     })
   })
+  return (
+    <>
+      <Show when={selectedUser()}>
+        <UserPage user_id={selectedUser()} />
+      </Show>
+      <Show when={!selectedUser()}>
+        <div class='overflow-y-auto'>
+          <Table>
+            <Table.Head>
+              <Table.Row>
+                <Table.Header class='md:w-[24rem]'>Email</Table.Header>
+                <Table.Header>Name</Table.Header>
+                <Table.Header class='w-40'>Location</Table.Header>
+                <Table.Header class='w-40 hidden md:table-cell'>
+                  Role
+                </Table.Header>
+              </Table.Row>
+            </Table.Head>
+            <Table.Body>
+              <For each={userData.users}>
+                {(user) => (
+                  <Table.Row
+                    class='hover:bg-zinc-800 hover:cursor-pointer'
+                    onDblClick={() => {
+                      setSelectedUser(user.id)
+                    }}
+                  >
+                    <Table.Cell>{user.email}</Table.Cell>
+                    <Table.Cell>{user.name}</Table.Cell>
+                    <Table.Cell>{user.location}</Table.Cell>
+                    <Table.Cell class='hidden md:table-cell'>
+                      {user.is_admin ? 'Admin' : 'User'}
+                    </Table.Cell>
+                  </Table.Row>
+                )}
+              </For>
+            </Table.Body>
+          </Table>
+        </div>
+      </Show>
+      <div class='flex-1 border-b border-b-zinc-800'></div>
+      <div class='grid grid-cols-2 md:grid-cols-4 gap-8'>
+        <Show when={selectedUser()}>
+          <button
+            class='p-4 bg-zinc-800 cursor-pointer [grid-row:1] [grid-column:1] md:[grid-column:3] hover:bg-zinc-700 transition-colors md:rounded-br'
+            onClick={() => {
+              setSelectedUser(undefined)
+            }}
+          >
+            Back
+          </button>
+        </Show>
+        <button
+          class='p-4 bg-zinc-800 cursor-pointer [grid-row:1] [grid-column:2] md:[grid-column:4] hover:bg-zinc-700 transition-colors md:rounded-br'
+          onClick={() => {
+            props.onClose()
+          }}
+        >
+          Close
+        </button>
+      </div>
+    </>
+  )
+}
 
+const ChatlogTab: Component<ParentProps<{ onClose?: () => void }>> = (
+  props
+) => {
+  const [chatData, setChatData] = createStore<{ chat: Array<any> }>({
+    chat: [],
+  })
+
+  onMount(() => {
+    axios.get('/api/v1/chatlog').then((response) => {
+      setChatData('chat', response.data.data)
+    })
+  })
+  return (
+    <>
+      <div class='overflow-y-auto'>
+        <Table>
+          <Table.Head>
+            <Table.Row>
+              <Table.Header class='w-80 max-lg:hidden'>Time</Table.Header>
+              <Table.Header class='w-40'>User</Table.Header>
+              <Table.Header>Message</Table.Header>
+            </Table.Row>
+          </Table.Head>
+          <Table.Body>
+            <For each={chatData.chat}>
+              {(chat) => (
+                <Table.Row class='hover:bg-zinc-800 hover:cursor-pointer'>
+                  <Table.Cell class='max-lg:hidden'>
+                    {dayjs().to(chat.timestamp)}
+                  </Table.Cell>
+                  <Table.Cell>{chat.user.name}</Table.Cell>
+                  <Table.Cell>{chat.message}</Table.Cell>
+                </Table.Row>
+              )}
+            </For>
+          </Table.Body>
+        </Table>
+      </div>
+      <div class='flex-1 border-b border-b-zinc-800'></div>
+      <div class='grid grid-cols-2 md:grid-cols-4 gap-8'>
+        <button
+          class='p-4 bg-zinc-800 cursor-pointer [grid-row:1] [grid-column:2] md:[grid-column:4] hover:bg-zinc-700 transition-colors md:rounded-br'
+          onClick={() => {
+            props.onClose()
+          }}
+        >
+          Close
+        </button>
+      </div>
+    </>
+  )
+}
+
+export const AdminModal: Component<{
+  visible?: boolean
+  onClose?: () => void
+}> = (props) => {
   return (
     <Show when={props.visible}>
       <Portal mount={document.getElementById('modal-container')}>
         <div class='fixed left-0 top-0 w-screen h-screen bg-black/60 font-mono pointer-events-auto z-1000'>
           <div class='fixed w-full h-full md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-3/4 md:h-3/4 flex flex-col text-gray-300 bg-zinc-900 md:shadow-md md:rounded-md'>
-            <div class='flex'>
-              <a class='p-4 flex-1 bg-zinc-800 md:rounded-tl-md hover:bg-zinc-700 cursor-pointer transition-colors'>
-                <FontAwesomeIcon icon='users' className='pr-4' />
-                Users
-              </a>
-              <a class='p-4 flex-1 bg-zinc-800 md:rounded-tr-md hover:bg-zinc-700 cursor-pointer transition-colors'>
-                <FontAwesomeIcon icon='cog' className='pr-4' />
-                Settings
-              </a>
-            </div>
-            <div class='flex-1 overflow-y-auto border-b border-zinc-800'>
-              <Show when={selectedUser()}>
-                <UserPage user_id={selectedUser()} />
-              </Show>
-              <Show when={!selectedUser()}>
-                <Table>
-                  <Table.Head>
-                    <Table.Row>
-                      <Table.Header class='md:w-[24rem]'>Email</Table.Header>
-                      <Table.Header>Name</Table.Header>
-                      <Table.Header class='w-40'>Location</Table.Header>
-                      <Table.Header class='w-40 hidden md:table-cell'>
-                        Role
-                      </Table.Header>
-                    </Table.Row>
-                  </Table.Head>
-                  <Table.Body>
-                    <For each={userData.users}>
-                      {(user) => (
-                        <Table.Row
-                          class='hover:bg-zinc-800 hover:cursor-pointer'
-                          onDblClick={() => {
-                            setSelectedUser(user.id)
-                          }}
-                        >
-                          <Table.Cell>{user.email}</Table.Cell>
-                          <Table.Cell>{user.name}</Table.Cell>
-                          <Table.Cell>{user.location}</Table.Cell>
-                          <Table.Cell class='hidden md:table-cell'>
-                            {user.is_admin ? 'Admin' : 'User'}
-                          </Table.Cell>
-                        </Table.Row>
-                      )}
-                    </For>
-                  </Table.Body>
-                </Table>
-              </Show>
-            </div>
-            <div class='grid grid-cols-2 md:grid-cols-4 gap-8'>
-              <Show when={selectedUser()}>
-                <button
-                  class='p-4 bg-zinc-800 cursor-pointer [grid-row:1] [grid-column:1] md:[grid-column:3] hover:bg-zinc-700 transition-colors md:rounded-br'
-                  onClick={() => {
-                    setSelectedUser(undefined)
-                  }}
-                >
-                  Back
-                </button>
-              </Show>
-              <button
-                class='p-4 bg-zinc-800 cursor-pointer [grid-row:1] [grid-column:2] md:[grid-column:4] hover:bg-zinc-700 transition-colors md:rounded-br'
-                onClick={() => {
-                  props.onClose()
-                }}
+            <Tab>
+              <Tab.Content
+                class='flex flex-col flex-1'
+                icon='users'
+                title='Users'
               >
-                Close
-              </button>
-            </div>
+                <UserTab onClose={props.onClose} />
+              </Tab.Content>
+              <Tab.Content
+                class='flex flex-col flex-1 overflow-y-hidden'
+                icon='message'
+                title='Chatlog'
+              >
+                <ChatlogTab onClose={props.onClose} />
+              </Tab.Content>
+            </Tab>
           </div>
         </div>
       </Portal>
