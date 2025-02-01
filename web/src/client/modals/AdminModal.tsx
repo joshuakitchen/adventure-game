@@ -329,6 +329,57 @@ const ChatlogTab: Component<ParentProps<{ onClose?: () => void }>> = (
   )
 }
 
+const AuditTab: Component<ParentProps<{ onClose?: () => void }>> = (props) => {
+  const [auditData, setAuditData] = createStore<{ audit: Array<any> }>({
+    audit: [],
+  })
+
+  onMount(() => {
+    axios.get('/api/v1/audit').then((response) => {
+      setAuditData('audit', response.data.data)
+    })
+  })
+  return (
+    <>
+      <div class='overflow-y-auto'>
+        <Table>
+          <Table.Head>
+            <Table.Row>
+              <Table.Header class='w-80 max-lg:hidden'>Time</Table.Header>
+              <Table.Header class='w-40'>User</Table.Header>
+              <Table.Header>Classification</Table.Header>
+            </Table.Row>
+          </Table.Head>
+          <Table.Body>
+            <For each={auditData.audit}>
+              {(chat) => (
+                <Table.Row class='hover:bg-zinc-800 hover:cursor-pointer'>
+                  <Table.Cell class='max-lg:hidden'>
+                    {dayjs().to(chat.timestamp)}
+                  </Table.Cell>
+                  <Table.Cell>{chat.user.name}</Table.Cell>
+                  <Table.Cell>{chat.classification}</Table.Cell>
+                </Table.Row>
+              )}
+            </For>
+          </Table.Body>
+        </Table>
+      </div>
+      <div class='flex-1 border-b border-b-zinc-800'></div>
+      <div class='grid grid-cols-2 md:grid-cols-4 gap-8'>
+        <button
+          class='p-4 bg-zinc-800 cursor-pointer [grid-row:1] [grid-column:2] md:[grid-column:4] hover:bg-zinc-700 transition-colors md:rounded-br'
+          onClick={() => {
+            props.onClose()
+          }}
+        >
+          Close
+        </button>
+      </div>
+    </>
+  )
+}
+
 export const AdminModal: Component<{
   visible?: boolean
   onClose?: () => void
@@ -352,6 +403,13 @@ export const AdminModal: Component<{
                 title='Chatlog'
               >
                 <ChatlogTab onClose={props.onClose} />
+              </Tab.Content>
+              <Tab.Content
+                class='flex flex-col flex-1 overflow-y-hidden'
+                icon='info-circle'
+                title='Audit'
+              >
+                <AuditTab onClose={props.onClose} />
               </Tab.Content>
             </Tab>
           </div>

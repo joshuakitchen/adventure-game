@@ -2,6 +2,7 @@ import textwrap
 import random
 from typing import List, Optional, TYPE_CHECKING
 from .base import aliases, autocomplete, command, CommandHandler
+from ..enemy import Enemy
 from ..world import World
 
 if TYPE_CHECKING:
@@ -51,7 +52,7 @@ class WorldCommands:
 
         output += '\n'
 
-        output = textwrap.fill(output, 80) + '\n\n'
+        output = textwrap.fill(output, 80) + '\n'
 
         biome_map = ''
         population_map = ''
@@ -71,10 +72,7 @@ class WorldCommands:
         map_display = ''
         for bm, pm in zip(biome_map.split('\n'), population_map.split('\n')):
             map_display = map_display + bm + ' ' + pm + '\n'
-        entity_names: List[str] = [f'@lgr@{e.name}@res@' for e in cell.characters if e is not c] + \
-            [f'@red@{e.name}@res@' for e in cell.enemies] + \
-            [f'@yel@{e["name"]}@res@' for e in cell.items]
-        output += f'Map:      Pop.:\n{map_display}\n'
+        output += f'\n{map_display}'
         await c.send_message('game', output)
 
     @command
@@ -151,12 +149,25 @@ class WorldCommands:
 
     @command
     async def look(self, c: 'Character', cell: 'Cell', target, ordinal: Optional[int] = None):
-        """Looks at the given target.
+        """Look at a target within the local area, look can target either
+        specific entities or a collective of entites.
+
+        If you are to look at a singular rabbit, specify "@lbl@look @red@Rabbit@res@", if there
+        are multiple rabbits in the region use "@lbl@look @red@Rabbit@res@ 2" to specify the
+        ordinal of the rabbit you wish to look at.
+
+        If you are to look at a collective of rabbits, you can use "@lbl@look@res@ @red@rabbits@res@",
+        this will give you more information than just surveying did, such as if
+        any of them are injured.
 
         :command_summary: Looks at the given target and gives a description.
-        :command_param_type target: target
+        :command_param_type target: look_target
         :command_param_type ordinal: target_ordinal
         :command_category: Interaction"""
+        collective = Enemy.get_collective(target)
+        if collective is not None:
+            await c.send_message('game', '{}', collective['on_survey'](c, cell._enemies, cell, extended=True))
+            return
         if ordinal is not None:
             try:
                 ordinal_int = int(ordinal) - 1
@@ -201,6 +212,13 @@ class WorldCommands:
             f'"{i["name"]}"' if " " in i['name'] else i['name']
             for i in c._cell.items
         ]
+    
+    @autocomplete('look_target')
+    def autocomplete_look_target(self, cell: 'Cell', *inputs: str):
+        """Autocompletes the target which can be looked at in the local area."""
+        targets = [e.name for e in cell._enemies]
+        targets += list(set([e.data['collective_id'] for e in cell._enemies]))
+        return targets
 
     @aliases
     def alias_provider(self):

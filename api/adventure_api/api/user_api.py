@@ -1,8 +1,10 @@
+import json
 import subprocess
 
 from datetime import datetime
+from uuid import uuid4
 from fastapi import APIRouter, Request, Header, HTTPException, Response
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel
 from model import get_users, get_user_by_id
 from game import World
@@ -111,4 +113,75 @@ async def get_chatlog_route(request: Request):
     return {
         'data': chatlog,
         'total': len(chatlog)
+    }
+
+@user_router.post('/api/v1/bugreports')
+async def post_bugreport_route(request: Request):
+    """POST /api/v1/bugreports
+
+    Submit a bug report.
+    """
+    user = request.user
+    if not user:
+        raise HTTPException(403, 'You must be logged in to access this resource.')
+    data = await request.json()
+    if 'description' not in data:
+        raise HTTPException(400, 'Missing required field: message')
+    driver, conn = get_conn()
+    report_id = str(uuid4())
+    if driver == 'sqlite':
+        cur = conn.cursor()
+        cur.execute('INSERT INTO bug_report (id, user_id, description) VALUES (?, ?, ?)', (report_id, user['id'], data['description']))
+        conn.commit()
+        cur.close()
+    elif driver == 'postgres':
+        with conn.cursor() as cur:
+            cur.execute('INSERT INTO bug_report (id, user_id, description) VALUES (%s, %s, %s)', (report_id, user['id'], data['description']))
+        conn.commit()
+    
+    driver, conn = get_conn()
+    if driver == 'sqlite':
+        conn.execute(
+            'INSERT INTO audit (id, user_id, classification, extra_data) VALUES (?, ?, ?, ?)',
+            (str(uuid4()), user['id'], 'bug_report', f'{{"report_id": "{report_id}"}}'))
+        conn.commit()
+    elif driver == 'postgres':
+        with conn.cursor() as cur:
+            cur.execute(
+                'INSERT INTO audit (id, user_id, classification, extra_data) VALUES (%s, %s, %s, %s)',
+                (str(uuid4()), user['id'], 'bug_report', f'{{"report_id": "{report_id}"}}'))
+            conn.commit()
+        conn.commit()
+    
+    return Response(status_code=201)
+
+
+@user_router.get('/api/v1/audit')
+async def get_audit_route(request: Request):
+    """GET /api/v1/audit
+    
+    Get the audit log.
+    """
+    user = request.user
+    if not user or not user['is_admin']:
+        raise HTTPException(403, 'You do not have permission to access this resource.')
+    driver, conn = get_conn()
+    if driver == 'sqlite':
+        cur = conn.cursor()
+        cur.execute('SELECT audit.id, users.id, users.name, classification, extra_data, timestamp FROM audit INNER JOIN users ON audit.user_id = users.id ORDER BY timestamp DESC')
+        audit = cur.fetchall()
+        cur.close()
+    elif driver == 'postgres':
+        cur = conn.cursor()
+        cur.execute('SELECT audit.id, users.id, users.name, classification, extra_data, timestamp FROM audit INNER JOIN users ON audit.user_id = users.id ORDER BY timestamp DESC')
+        audit = cur.fetchall()
+        cur.close()
+    
+    audit = [
+        dict(id=a[0], user=dict(id=a[1], name=a[2]), classification=a[3], extra_data=json.dumps(a[4]), timestamp=a[5]) for a in audit
+    ]
+
+    return {
+        'data': audit,
+        'total': len(audit)
     }

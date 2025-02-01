@@ -169,12 +169,12 @@ class CommandHandler:
             await command_data['func'](handler, *(arguments + input[1:]))
         except TypeError as e:
             reg = re.compile(
-                f'{command_data["func"].__name__}\\(\\) takes (from )?\\d+ (to \\d )?positional arguments but \\d+ were given')
+                f'{command_data["func"].__qualname__}\\(\\) takes (from )?\\d+ (to \\d )?positional arguments but \\d+ were given')
             ureg = re.compile(
-                f'{command_data["func"].__name__}\\(\\) missing \\d+ required positional argument: \'.+\''
+                f'{command_data["func"].__qualname__}\\(\\) missing \\d+ required positional argument: \'.+\''
             )
             if reg.match(str(e)) or ureg.match(str(e)):
-                await self._character.send_message('game', '@red@Invalid command usage.@res@\n')
+                await self._character.send_message('game', '@lre@Invalid command usage, type "@lbl@help {}@lre@" for information on this command. @res@\n', input[0])
             else:
                 raise
 

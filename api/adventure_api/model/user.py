@@ -98,17 +98,18 @@ def check_password(expected, actual):
     return checkpw(expected, actual)
 
 
-def register_user(email: str, password: str):
+def register_user(email: str, password: str) -> str:
+    new_id = str(uuid4())
     db_driver, conn = get_conn()
     if db_driver == 'sqlite':
         try:
-            conn.execute('INSERT INTO users (id, email, password) VALUES (?, ?, ?)', [str(
-                uuid4()), email, hashpw(password.encode('utf-8'), gensalt()).decode('utf-8')])
+            conn.execute('INSERT INTO users (id, email, password) VALUES (?, ?, ?)', [new_id, email, hashpw(password.encode('utf-8'), gensalt()).decode('utf-8')])
             conn.commit()
         finally:
             conn.close()
     elif db_driver == 'postgres':
         with conn.cursor() as cur:
-            cur.execute('INSERT INTO users VALUES (%s, %s, %s)', [str(uuid4()), email, hashpw(
+            cur.execute('INSERT INTO users VALUES (%s, %s, %s)', [new_id, email, hashpw(
                 password.encode('utf-8'), gensalt()).decode('utf-8')])
         conn.commit()
+    return new_id

@@ -8,9 +8,6 @@ if TYPE_CHECKING:
 
 ENEMY_DATA = {}
 
-def register_enemy(data):
-    ENEMY_DATA[data['id']] = data
-
 class Enemy:
     _instance_id: str
     _internal_name: str
@@ -18,6 +15,7 @@ class Enemy:
     _cell: 'Cell'
     _target: Optional[str]
     _timer: int
+    _collectives: Dict[str, Dict[str, Any]] = {}
 
     def __init__(self, cell: 'Cell', internal_name: str):
         self._cell = cell
@@ -93,3 +91,12 @@ class Enemy:
         if not self._target:
             return None
         return self._cell.get(self._target)  # type: ignore
+    
+    @classmethod
+    def get_collective(cls, collective_id: str) -> Optional[Dict[str, Any]]:
+        return cls._collectives.get(collective_id, None)
+
+
+def register_enemy(data):
+    ENEMY_DATA[data['id']] = data
+    Enemy._collectives[data['collective_id']] = ENEMY_DATA[data['id']]

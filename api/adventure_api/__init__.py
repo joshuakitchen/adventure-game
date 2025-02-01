@@ -3,6 +3,7 @@ import threading
 import logging
 import shlex
 import time
+from uuid import uuid4
 import jwt
 import re
 import os
@@ -10,6 +11,7 @@ from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconn
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import Optional
+from config import get_conn
 from game import Character, World
 from model import check_password, get_user, register_user
 from setup import setup_database
@@ -50,7 +52,22 @@ async def register(req: RegisterRequest):
     u = get_user(req.email)
     if u:
         raise HTTPException(403, 'That email is already taken')
-    register_user(req.email, req.password)
+    user_id = register_user(req.email, req.password)
+
+    driver, conn = get_conn()
+    if driver == 'sqlite':
+        conn.execute(
+            'INSERT INTO audit (id, user_id, classification) VALUES (?, ?, ?)',
+            (str(uuid4()), user_id, 'register'))
+        conn.commit()
+    elif driver == 'postgres':
+        with conn.cursor() as cur:
+            cur.execute(
+                'INSERT INTO audit (id, user_id, classification) VALUES (%s, %s, %s)',
+                (str(uuid4()), user_id, 'register'))
+            conn.commit()
+        conn.commit()
+
     return {
         'success': True
     }
@@ -69,6 +86,21 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         raise HTTPException(
             status_code=400,
             detail='Incorrect email or password.')
+    
+    driver, conn = get_conn()
+    if driver == 'sqlite':
+        conn.execute(
+            'INSERT INTO audit (id, user_id, classification) VALUES (?, ?, ?)',
+            (str(uuid4()), user[0], 'login'))
+        conn.commit()
+    elif driver == 'postgres':
+        with conn.cursor() as cur:
+            cur.execute(
+                'INSERT INTO audit (id, user_id, classification) VALUES (%s, %s, %s)',
+                (str(uuid4()), user[0], 'login'))
+            conn.commit()
+        conn.commit()
+
     return {
         'access_token': jwt.encode({'type': 'access_token', 'user_id': user[0], 'email': user[1], 'client_id': CLIENT_ID}, CLIENT_SECRET, algorithm='HS256'),
         'refresh_token': jwt.encode({'type': 'refresh_token', 'user_id': user[0], 'email': user[1], 'client_id': CLIENT_ID}, CLIENT_SECRET, algorithm='HS256'),

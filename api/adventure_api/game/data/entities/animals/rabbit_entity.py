@@ -100,7 +100,7 @@ async def on_rabbit_entry(self: Enemy, cell: 'Cell'):
     choices += on_entry['default']
     await cell.send_message('game', random.choice(choices))
 
-def on_rabbit_survey(character: 'Character', entities: List[Enemy], cell: 'Cell'):
+def on_rabbit_survey(character: 'Character', entities: List[Enemy], cell: 'Cell', extended: bool=False):
     choices = []
     if len(entities) == 1:
         choices += on_survey[cell._biome]['singular']
@@ -115,6 +115,7 @@ def on_rabbit_survey(character: 'Character', entities: List[Enemy], cell: 'Cell'
 
 rabbit_definition = {
     'id': 'rabbit',
+    'collective_id': 'rabbits',
     'name': 'Rabbit',
     'description': [
         'A fluffy, white bunny with twitching nose. ',

@@ -169,18 +169,24 @@ export const GamePage: Component = () => {
           setAdminModal(false)
         }}
       />
-      <BugModal />
       <div class='mx-auto h-full flex flex-col md:flex-row text-gray-300'>
         <nav class='flex flex-row md:flex-col border-l border-zinc-800 bg-zinc-800'>
-          <a class='p-4 transition-colors hover:bg-zinc-700' href='#'>
-            <FontAwesomeIcon className='fa-fw' icon='terminal' />
-          </a>
           <a class='p-4 transition-colors hover:bg-zinc-700' href='#'>
             <FontAwesomeIcon className='fa-fw' icon='comments' />
           </a>
           <a class='p-4 transition-colors hover:bg-zinc-700' href='#'>
-            <FontAwesomeIcon className='fa-fw' icon='bug' />
+            <FontAwesomeIcon className='fa-fw' icon='circle-info' />
           </a>
+          <BugModal
+            trigger={
+              <a class='p-4 transition-colors hover:bg-zinc-700' href='#'>
+                <FontAwesomeIcon
+                  className='fa-fw text-xl text-gray-300'
+                  icon='bug'
+                />
+              </a>
+            }
+          />
           <div class='w-full' />
           <Show when={user.is_admin}>
             <a

@@ -101,10 +101,11 @@ def create_audit_table():
         try:
             conn.execute(
                 '''CREATE TABLE IF NOT EXISTS audit (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id VARCHAR(36) PRIMARY KEY,
                 user_id VARCHAR(36) NOT NULL,
-                action VARCHAR(255) NOT NULL,
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                classification VARCH(40) NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                extra_data TEXT DEFAULT '{}'
                 )'''
                 )
             conn.commit()
@@ -113,10 +114,42 @@ def create_audit_table():
     elif driver == 'postgres':
         with conn.cursor() as cur:
             cur.execute('''CREATE TABLE IF NOT EXISTS audit (
-                id SERIAL PRIMARY KEY,
+                id VARCHAR(36) PRIMARY KEY,
                 user_id VARCHAR(36) NOT NULL,
-                action VARCHAR(255) NOT NULL,
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                classification VARCHAR(40) NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                extra_data TEXT DEFAULT '{}'
+                )''')
+        conn.commit()
+
+
+def create_bug_report_table():
+    """Creates the bug_report table if it doesn't exist"""
+    driver, conn = get_conn()
+    if driver == 'sqlite':
+        try:
+            conn.execute(
+                '''CREATE TABLE IF NOT EXISTS bug_report (
+                id VARCHAR(36) PRIMARY KEY,
+                user_id VARCHAR(36) NOT NULL,
+                description TEXT NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                severity INT DEFAULT -1,
+                is_resolved BOOLEAN DEFAULT FALSE
+                )'''
+                )
+            conn.commit()
+        finally:
+            conn.close()
+    elif driver == 'postgres':
+        with conn.cursor() as cur:
+            cur.execute('''CREATE TABLE IF NOT EXISTS bug_report (
+                id VARCHAR(36) PRIMARY KEY,
+                user_id VARCHAR(36) NOT NULL,
+                description TEXT NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                severity INT DEFAULT -1,
+                is_resolved BOOLEAN DEFAULT FALSE
                 )''')
         conn.commit()
 
@@ -157,5 +190,7 @@ def setup_database():
     create_version_table()
     create_user_table()
     create_chatlog_table()
+    create_audit_table()
+    create_bug_report_table()
 
     migrate()

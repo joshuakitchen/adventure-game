@@ -15,6 +15,11 @@ class Item:
 
     An item is created using an internal name and a group of qualifiers, so a
     stick could be qualified with "oak" to make it an "oak" stick."""
+    _item_data: Dict[str, Dict[str, Any]] = {}
+
+    @classmethod
+    def register_item(cls, data: Dict[str, Any]):
+        cls._item_data[data['id']] = data
 
     @staticmethod
     def get_display_name(item: Tuple[str, Dict[str, str]]) -> str:
