@@ -44,7 +44,7 @@ const App: Component = () => {
         <div class='p-4 bg-zinc-950 text-zinc-300 flex gap-4 pointer-events-auto z-10 align-middle'>
           <div class='flex-1 py-2'>
             This website uses essential cookies to manage sessions, it does not
-            track you in any way.
+            use third-party tracking cookies.
           </div>
           <button
             class='bg-zinc-800 px-16 py-2 hover:cursor-pointer hover:bg-zinc-700'
