@@ -19,7 +19,7 @@ const LoginPage: Component = () => {
     }
   })
   return (
-    <div class='mx-auto mt-4 md:w-[480px] flex flex-col'>
+    <div class='mx-auto pt-4 md:w-[480px] flex flex-col'>
       <div class='p-4 text-gray-200 text-center border-b border-zinc-800 font-mono'>
         Welcome to Nymirith
       </div>
