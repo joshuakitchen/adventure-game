@@ -4,7 +4,7 @@ import random
 from .enemy import Enemy
 from .item import Item
 from noise import snoise2
-from typing import Any, Dict, Optional, List, NamedTuple, Tuple, Union, TYPE_CHECKING
+from typing import Any, Callable, Dict, Optional, List, NamedTuple, Tuple, Union, TYPE_CHECKING
 
 
 if TYPE_CHECKING:
@@ -57,8 +57,11 @@ class Cell:
         if len(self._enemies) < MAX_ENEMIES and self._spawn_tick == 0:
             if random.random() > 0.7:
                 e = self.spawn(random.choice(self.data['enemies']))
-                await self.send_message(
-                    'game', '@red@{}@res@ is wandering nearby.\n', e.name)
+                if isinstance(e.data['on_entry'], Callable):
+                    await e.data['on_entry'](e, self)
+                else:
+                    await self.send_message(
+                        'game', '@red@{}@res@ is wandering nearby.', e.name)
             self._spawn_tick = SPAWN_TICK
 
     async def send_message(self, type: str, message: str, *args, **kwargs):

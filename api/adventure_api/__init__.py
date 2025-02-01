@@ -16,6 +16,7 @@ from setup import setup_database
 from starlette.middleware.authentication import AuthenticationMiddleware
 from auth import BearerTokenBackend
 from api import user_router
+from game.data import load_data
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -179,6 +180,8 @@ thread = threading.Thread(target=lambda: asyncio.run(loop()))
 
 @app.on_event("startup")
 def begin_game_loop():
+    load_data()
+
     app.include_router(user_router)
     app.add_middleware(AuthenticationMiddleware, backend=BearerTokenBackend())
 

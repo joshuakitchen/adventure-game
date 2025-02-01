@@ -1,3 +1,5 @@
+import textwrap
+import random
 from typing import List, Optional, TYPE_CHECKING
 from .base import aliases, autocomplete, command, CommandHandler
 from ..world import World
@@ -9,6 +11,17 @@ if TYPE_CHECKING:
 
 IMMOVABLE_BIOMES = ['sea', 'mountain']
 
+SURVEY_MESSAGES = [
+    "You take a moment to observe your surroundings.",
+    "You scan the area, taking in the details.",
+    "You glance around, looking for anything of interest.",
+    "You carefully examine the landscape.",
+    "You take in your surroundings, noting any movement.",
+    "You pause to get a better sense of the area.",
+    "You look around, searching for anything unusual.",
+    "You study the environment, watching for signs of life.",
+    "You assess the area, noting anything of importance."
+]
 
 class WorldCommands:
     """Command handler for commands which interact with the world and areas
@@ -20,6 +33,26 @@ class WorldCommands:
 
         :command_summary: Maps the surrounding area.
         :command_category: Movement"""
+        output = random.choice(SURVEY_MESSAGES) + ' '
+        output += cell.description.replace(',', '') + ' '
+
+        if cell.enemies:
+            enemy_types = {}
+            for e in cell.enemies:
+                if e.name in enemy_types:
+                    enemy_types[e.name] += [e]
+                else:
+                    enemy_types[e.name] = [e]
+
+            for enemies in enemy_types.values():
+                output += enemies[0].data['on_survey'](c, enemies, cell) + '\n'
+        else:
+            output += random.choice(cell.data['empty']) + '\n'
+
+        output += '\n'
+
+        output = textwrap.fill(output, 80) + '\n\n'
+
         biome_map = ''
         population_map = ''
 
@@ -41,7 +74,8 @@ class WorldCommands:
         entity_names: List[str] = [f'@lgr@{e.name}@res@' for e in cell.characters if e is not c] + \
             [f'@red@{e.name}@res@' for e in cell.enemies] + \
             [f'@yel@{e["name"]}@res@' for e in cell.items]
-        await c.send_message('game', 'You survey the surrounding area.\n\n{}\n\nMap:      Pop.:\n{}You can see:\n{}\n', cell.description, map_display, '\n'.join(entity_names))
+        output += f'Map:      Pop.:\n{map_display}\n'
+        await c.send_message('game', output)
 
     @command
     async def pickup(self, c: 'Character', item: str):

@@ -9,6 +9,13 @@
         "You are in a peaceful plain. The horizon seems endless, broken only by the occasional lone tree or wandering animal."
       ]
     },
+    "empty": [
+      "The forest is eerily quiet, only the distant rustling of leaves breaking the silence.",
+      "A gentle breeze stirs the canopy, sending dappled light dancing across the forest floor.",
+      "The trees stand tall and unmoving, their thick trunks covered in moss and creeping vines.",
+      "You hear the occasional snap of a twig, but nothing stirs within the dense underbrush.",
+      "A faint scent of damp earth and pine lingers in the air, the forest still and undisturbed."
+    ],
     "scavenge": [
       ["rock", {"shape": "smooth"}],
       ["rock", {"shape": "pointy"}]
@@ -26,6 +33,11 @@
         "You are in a dense forest. The trees are so close together that it's hard to see more than a few feet in any direction."
       ]
     },
+    "empty": [
+      "A gust of wind rolls across the open fields, rustling the grass like distant whispers.",
+      "The landscape is peaceful, interrupted only by the occasional chirping of distant birds.",
+      "You take a deep breath of the fresh, open air. The plains are quiet and serene."
+    ],
     "scavenge": [
       ["rock", {"shape": "smooth"}],
       ["rock", {"shape": "pointy"}],

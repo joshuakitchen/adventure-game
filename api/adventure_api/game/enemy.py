@@ -6,9 +6,10 @@ if TYPE_CHECKING:
     from .cell import Cell
     from .character import Character
 
-with open('./data/enemies.json', 'r') as f:
-    ENEMY_DATA = json.loads(f.read())
+ENEMY_DATA = {}
 
+def register_enemy(data):
+    ENEMY_DATA[data['id']] = data
 
 class Enemy:
     _instance_id: str
