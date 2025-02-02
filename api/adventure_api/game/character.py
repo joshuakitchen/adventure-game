@@ -13,6 +13,7 @@ from util import generate_id, EXP_TABLE
 
 if TYPE_CHECKING:
     from .cell import Cell
+    from .enemy import Enemy
 
 logger = logging.getLogger(__name__)
 
@@ -167,6 +168,9 @@ class Character:
             await self.send_message('game', 'You hit the @red@{}@res@ for @red@{}@res@ damage, it looks {}', target.name, hit, target.damage_state)
             if target.is_dead:
                 await self.send_message('game', 'You kill the @red@{}@res@', target.name)
+                if 'on_defeat' in target.data:
+                    print(target.data['on_defeat'], target, self, self._cell)
+                    await target.data['on_defeat'](target, self, self._cell)
                 self._target = None
                 self._action = None
             self._action_timer = 3
@@ -406,7 +410,7 @@ class Character:
         return int(a)
 
     @property
-    def target(self):
+    def target(self) -> 'Enemy':
         if not self._cell:
             return None
         if self._target is None:

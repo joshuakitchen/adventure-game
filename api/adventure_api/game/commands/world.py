@@ -4,6 +4,7 @@ from typing import List, Optional, TYPE_CHECKING
 from .base import aliases, autocomplete, command, CommandHandler
 from ..enemy import Enemy
 from ..world import World
+from ..item import Item
 
 if TYPE_CHECKING:
     from ..cell import Cell
@@ -49,6 +50,19 @@ class WorldCommands:
                 output += enemies[0].data['on_survey'](c, enemies, cell) + '\n'
         else:
             output += random.choice(cell.data['empty']) + '\n'
+        
+        if cell.items:
+            item_types = {}
+            for i in cell._items:
+                if i[0] in item_types:
+                    item_types[i[0]] += [i]
+                else:
+                    item_types[i[0]] = [i]
+            
+            for item in item_types.values():
+                item_type = item[0][0]
+                if 'on_survey' in Item.get_item_data(item_type):
+                    output += Item.get_item_data(item_type)['on_survey'](c, item, cell) + '\n'
 
         output += '\n'
 

@@ -1,6 +1,7 @@
 import random
 from typing import TYPE_CHECKING, List
 from game.enemy import Enemy, register_enemy
+from game.item import Item
 
 if TYPE_CHECKING:
     from game.cell import Cell
@@ -113,6 +114,9 @@ def on_rabbit_survey(character: 'Character', entities: List[Enemy], cell: 'Cell'
         choices += on_survey['default']['group']
     return random.choice(choices)
 
+async def on_rabbit_defeat(self: Enemy, character: 'Character', cell: 'Cell'):
+    cell.add_item(['rabbit_corpse', {}])
+
 rabbit_definition = {
     'id': 'rabbit',
     'collective_id': 'rabbits',
@@ -126,7 +130,8 @@ rabbit_definition = {
     'hp': 4,
     'attack_timer': 3,
     'on_entry': on_rabbit_entry,
-    'on_survey': on_rabbit_survey
+    'on_survey': on_rabbit_survey,
+    'on_defeat': on_rabbit_defeat
 }
 
 register_enemy(rabbit_definition)
