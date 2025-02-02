@@ -385,6 +385,14 @@ class Character:
     @property
     def faction(self) -> str:
         return 'Independent'
+    
+    @property
+    def health(self) -> int:
+        return self._hp
+    
+    @health.setter
+    def health(self, value: int):
+        self._hp = max(0, min(value, self._attributes['constitution'][0]))
 
     @property
     def max_hit(self):

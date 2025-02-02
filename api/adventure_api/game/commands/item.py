@@ -1,5 +1,6 @@
 from .base import autocomplete, command
 from typing import List, TYPE_CHECKING
+from ..item import Item
 
 if TYPE_CHECKING:
     from ..character import Character
@@ -60,6 +61,22 @@ class ItemCommands:
         for i in c.inventory:
             if i['name'] == item:
                 await c.send_message('game', 'You inspect the @yel@{}@res@ and find:\n{}\n', item, i['description'])
+                return
+        await c.send_message('game', 'You don\'t have a @yel@{}@res@.\n', item)
+    
+    @command
+    async def eat(self, c: 'Character', item: str):
+        """Eats an item in your inventory.
+        
+        :command_summary: Eats an item in your inventory.
+        :command_param_type item: inventory
+        :command_category: Inventory"""
+        for idx, i in enumerate(c.inventory):
+            if i['name'] == item and 'on_eat' in Item.get_item_data(i['internal_name']):
+                await Item.get_item_data(i['internal_name'])['on_eat'](i, idx, c)
+                return
+            elif i['name'] == item:
+                await c.send_message('game', 'You can\'t eat a @yel@{}@res@.\n', item)
                 return
         await c.send_message('game', 'You don\'t have a @yel@{}@res@.\n', item)
 

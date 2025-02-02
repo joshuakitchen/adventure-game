@@ -5,10 +5,6 @@ from typing import Dict, List, Any, Tuple, TYPE_CHECKING
 if TYPE_CHECKING:
     from .character import Character
 
-with open('./data/items.json', 'r') as f:
-    ITEM_DATA = json.loads(f.read())
-
-
 class Item:
     """Contains utility functions for items, does not actually contain an item
     itself.
@@ -25,9 +21,9 @@ class Item:
     def get_display_name(item: Tuple[str, Dict[str, str]]) -> str:
         return Item.get_item_properties(item).get('name', 'Invalid Item')
     
-    @staticmethod
-    def get_description(item: Tuple[str, Dict[str, str]]) -> str:
-        data = ITEM_DATA[item[0]]
+    @classmethod
+    def get_description(cls, item: Tuple[str, Dict[str, str]]) -> str:
+        data = cls._item_data[item[0]]
 
         desc = data['description']['base']
         
@@ -39,9 +35,9 @@ class Item:
         return desc.format(
             **{k: v.capitalize() for k, v in item[1].items()}).strip()
 
-    @staticmethod
-    def get_item_properties(item: Tuple[str, Dict[str, str]]):
-        data = ITEM_DATA[item[0]]
+    @classmethod
+    def get_item_properties(cls, item: Tuple[str, Dict[str, str]]):
+        data = cls._item_data[item[0]]
         return dict(
             name=data['name'].format(
                 **{k: v.capitalize() for k, v in item[1].items()}).strip(),
@@ -64,9 +60,9 @@ class Item:
                 return False
         return True
     
-    @staticmethod
-    async def handle_script(item: Tuple[str, Dict[str, str]], action: str, character: 'Character'):
-        data = ITEM_DATA[item[0]]
+    @classmethod
+    async def handle_script(cls, item: Tuple[str, Dict[str, str]], action: str, character: 'Character'):
+        data = cls._item_data[item[0]]
         script: Dict[str, List[Any]] = data.get(action, None)
         if script:
             for k, v in script.items():
@@ -93,3 +89,13 @@ class Item:
             return random.choice(['average', 'good', 'good', 'excellent'])
         
         return random.choice(['good', 'excellent', 'excellent'])
+    
+    @classmethod
+    def get_item_data(cls, item_id: str) -> Dict[str, Any]:
+        return cls._item_data[item_id]
+
+with open('./data/items.json', 'r') as f:
+    ITEM_DATA = json.loads(f.read())
+    for k, v in ITEM_DATA.items():
+        v['id'] = k
+        Item.register_item(v)
