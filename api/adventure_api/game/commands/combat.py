@@ -41,7 +41,7 @@ class CombatCommands:
     @autocomplete('target')
     def autocomplete_target(self, cell: 'Cell', input: List[str]):
         """Autocompletion handler for the different targets available."""
-        return [e.name for e in cell._enemies]
+        return [e.name.lower() for e in cell._enemies]
 
     @autocomplete('target_ordinal')
     def autocomplete_target_ordinal(self, cell: 'Cell', input: List[str]):

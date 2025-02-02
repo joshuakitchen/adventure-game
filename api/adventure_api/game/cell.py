@@ -157,7 +157,7 @@ class Cell:
         too."""
         targets: List[Enemy] = []
         for e in self._enemies:
-            if e.name == target:
+            if e.name.lower() == target.lower():
                 targets.append(e)
         return targets
 
