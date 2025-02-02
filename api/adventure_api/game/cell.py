@@ -42,10 +42,10 @@ class Cell:
         self._claimed_by = None
         self._spawn_tick = SPAWN_TICK
         self.load()
-        if 'enemies' in self.data:
-            for _ in range(random.randint(0, MAX_ENEMIES)):
-                if random.random() > 0.2:
-                    self.spawn(random.choice(self.data['enemies']))
+        for _ in range(MAX_ENEMIES):
+            self.spawn_random_enemy()
+            if random.random() > 0.5:
+                break
 
     async def tick(self):
         if self._spawn_tick > 0:
@@ -56,13 +56,23 @@ class Cell:
             await e.tick()
         if len(self._enemies) < MAX_ENEMIES and self._spawn_tick == 0:
             if random.random() > 0.7:
-                e = self.spawn(random.choice(self.data['enemies']))
+                e = self.spawn_random_enemy()
                 if isinstance(e.data['on_entry'], Callable):
                     await e.data['on_entry'](e, self)
                 else:
                     await self.send_message(
                         'game', '@red@{}@res@ is wandering nearby.', e.name)
             self._spawn_tick = SPAWN_TICK
+    
+    def spawn_random_enemy(self) -> Enemy:
+        if 'enemies' in self.data:
+            max_chance = sum([e[1] for e in self.data['enemies']])
+            rand = random.random() * max_chance
+
+            for enemy in self.data['enemies']:
+                rand -= enemy[1]
+                if rand <= 0:
+                    return self.spawn(enemy[0])
 
     async def send_message(self, type: str, message: str, *args, **kwargs):
         await asyncio.gather(*[

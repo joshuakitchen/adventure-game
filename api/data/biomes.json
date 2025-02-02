@@ -21,8 +21,8 @@
       ["rock", {"shape": "pointy"}]
     ],
     "enemies": [
-      "rabbit",
-      "wolf"
+      ["rabbit", 0.8],
+      ["wolf", 0.2]
     ]
   },
   "forest": {
@@ -46,8 +46,9 @@
       ["sagewort", {"quality": "script:get_sagewort_quality"}]
     ],
     "enemies": [
-      "rabbit",
-      "wolf"
+      ["rabbit", 0.7],
+      ["wolf", 0.2],
+      ["bear", 0.1]
     ]
   }
 }
