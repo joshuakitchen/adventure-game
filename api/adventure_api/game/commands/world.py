@@ -68,25 +68,26 @@ class WorldCommands:
 
         output = textwrap.fill(output, 80) + '\n'
 
-        biome_map = ''
-        population_map = ''
+        if c._settings.get('map_on_survey', True):
+            biome_map = ''
+            population_map = ''
 
-        for z in range(5):
-            for x in range(9):
-                cx = c._x + x - 4
-                cz = c._z + z - 2
-                l_cell = World.get_cell(cx, cz)
-                population_map = population_map + l_cell.population_icon
-                if cx == c._x and cz == c._z:
-                    biome_map = biome_map + '@lre@@@res@'
-                else:
-                    biome_map = biome_map + l_cell.biome_icon
-            biome_map = biome_map + '\n'
-            population_map = population_map + '\n'
-        map_display = ''
-        for bm, pm in zip(biome_map.split('\n'), population_map.split('\n')):
-            map_display = map_display + bm + ' ' + pm + '\n'
-        output += f'\n{map_display}'
+            for z in range(5):
+                for x in range(9):
+                    cx = c._x + x - 4
+                    cz = c._z + z - 2
+                    l_cell = World.get_cell(cx, cz)
+                    population_map = population_map + l_cell.population_icon
+                    if cx == c._x and cz == c._z:
+                        biome_map = biome_map + '@lre@@@res@'
+                    else:
+                        biome_map = biome_map + l_cell.biome_icon
+                biome_map = biome_map + '\n'
+                population_map = population_map + '\n'
+            map_display = ''
+            for bm, pm in zip(biome_map.split('\n'), population_map.split('\n')):
+                map_display = map_display + bm + ' ' + pm + '\n'
+            output += f'\n{map_display}'
         await c.send_message('game', output)
 
     @command

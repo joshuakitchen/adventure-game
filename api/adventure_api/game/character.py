@@ -73,6 +73,7 @@ class Character:
     _command_handler: CommandHandler
     _target: Optional[str]
     _disconnected: bool
+    _settings: Dict[str, str]
 
     def __init__(self, id: str, ws: WebSocket, session_id: str):
         """Constructs the Character
@@ -109,6 +110,8 @@ class Character:
         """Handles the character entering the world, this will take place just
         after the WebSocket connection and should provide either an introduction
         for new players, or an update for old players."""
+        for k, v in self._settings.items():
+            await self.set_setting(k, v)
         if self._state == 'intro':
             if send_motd:
                 await self.send_message('game', INTRODUCTION_TEXT, TITLE, 'test')
@@ -275,6 +278,17 @@ class Character:
             return
         message = replace_colors(message.format(*args, **kwargs))
         await self._ws.send_json(dict(type=type, data=message))
+    
+    async def set_setting(self, setting: str, value: str):
+        """Sets a setting for the character.
+
+        :param setting: The setting to set.
+        :param value: The value to set the setting to.
+        """
+        self._settings[setting] = value
+        if self._ws is None or self._ws.client_state.value != 1:
+            return
+        await self._ws.send_json(dict(type='setting', setting=setting, value=value))
 
     def set_state(self, state: str):
         """Sets the state of this character.
@@ -336,7 +350,7 @@ class Character:
 
     def to_json(self) -> str:
         """Converts the character to JSON for saving."""
-        return json.dumps(dict(hp=self._hp, inventory=self._inventory, attributes=self._attributes, skills=self._skills, action_timer=self._action_timer))
+        return json.dumps(dict(hp=self._hp, inventory=self._inventory, attributes=self._attributes, skills=self._skills, action_timer=self._action_timer, settings=self._settings))
 
     def from_json(self, raw_data: Tuple[str, int, int, str, str]):
         """Converts the character back from JSON for loading.
@@ -352,6 +366,7 @@ class Character:
         self._attributes = data.get('attributes', self._attributes)
         self._skills = data.get('skills', self._skills)
         self._action_timer = data.get('action_timer', self._action_timer)
+        self._settings = data.get('settings', {})
 
     def load_character(self):
         """Loads the character using the current database driver."""

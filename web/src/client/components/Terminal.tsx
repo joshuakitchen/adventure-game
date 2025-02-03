@@ -28,6 +28,7 @@ export const TerminalScreen: Component<{
   text: string
   class?: string
   scrollOnChange?: boolean
+  scrollType?: 'smooth' | 'instant'
 }> = (props) => {
   const cls = cx(
     props.class,
@@ -42,7 +43,7 @@ export const TerminalScreen: Component<{
   createEffect(() => {
     props.text
     if (props.scrollOnChange) {
-      endRef.scrollIntoView({ behavior: 'smooth' })
+      endRef.scrollIntoView({ behavior: props.scrollType || 'smooth' })
     }
   })
   return (
@@ -73,7 +74,13 @@ export const TerminalInput: Component<{
   modes?: Array<{ icon?: string }>
 }> = (props) => {
   const [mode, setMode] = createSignal<number>(0)
+  const [x, setX] = createSignal<number>(0)
   let inRef: HTMLInputElement
+  createEffect(() => {
+    props.value
+
+    setX(inRef.scrollLeft)
+  })
   return (
     <div class='flex items-center bg-zinc-800 border-l border-zinc-900'>
       <For each={props.modes}>
@@ -98,8 +105,10 @@ export const TerminalInput: Component<{
         )}
       </For>
       <div class='relative flex flex-1'>
-        <div class='absolute flex left-0 right-0 top-0 bottom-0 p-4 text-gray-300/40 font-mono overflow-hidden'>
-          {props.autocomplete?.endsWith(':hidden') ? '' : props.autocomplete}
+        <div class='absolute flex left-0 right-0 top-0 bottom-0 m-4 text-gray-300/40 font-mono overflow-hidden whitespace-nowrap pointer-events-none'>
+          <div class='block' style={{ transform: `translateX(-${x()}px)` }}>
+            {props.autocomplete?.endsWith(':hidden') ? '' : props.autocomplete}
+          </div>
         </div>
         <input
           value={props.value}
@@ -123,6 +132,10 @@ export const TerminalInput: Component<{
           }}
           onInput={(e) => {
             props.onChange?.call(null, e.target.value, mode())
+            setX(e.target.scrollLeft)
+          }}
+          onScroll={(e) => {
+            setX(e.currentTarget.scrollLeft)
           }}
         />
       </div>
@@ -185,6 +198,7 @@ export const Terminal: Component<{
   screen: {
     text: string
     scrollOnChange?: boolean
+    scrollType?: 'smooth' | 'instant'
   }
   value: string
   autocomplete?: string

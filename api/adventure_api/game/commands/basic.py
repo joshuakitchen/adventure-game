@@ -71,15 +71,34 @@ class BasicCommands:
         pass
 
     @command
-    async def set(self, setting: str, value: str):
-        """Sets a setting for the game.
+    async def set(self, c: 'Character', setting: str, value: str):
+        """Sets a setting for the game which can either be client or server
+        side.
+
+        The following settings are available:
+        - input - Sets the input type for the game, can be either sentence or command.
+        - scroll - Whether to scroll smoothly or instantly, can be either smooth or instant.
+        - map_on_survey - Whether to show the map on the survey screen, can be either true or false.
 
         :command_summary: Sets a setting for the game.
         :command_category: System Commands
         :command_param_type setting: setting
         :command_param_type value: setting_value
         """
-        pass
+        if setting == 'input':
+            await c.send_message('game', 'Not yet implemented, using command.')
+        elif setting == 'scroll':
+            await c.set_setting('scroll', value)
+            await c.send_message('game', 'Now scrolling using {}.', value)
+        elif setting == 'map_on_survey':
+            if value == 'true':
+                await c.set_setting('map_on_survey', True)
+                await c.send_message('game', 'Map will now be shown on the survey screen.')
+            elif value == 'false':
+                await c.set_setting('map_on_survey', False)
+                await c.send_message('game', 'Map will not be shown on the survey screen.')
+        else:
+            await c.send_message('game', 'Setting not found.')
 
     @autocomplete('page')
     def autocomplete_page(self, input: List[str]):
@@ -92,11 +111,14 @@ class BasicCommands:
     
     @autocomplete('setting')
     def autocomplete_setting(self, input: List[str]):
-        return ['input']
+        return ['input', 'scroll', 'map_on_survey']
     
     @autocomplete('setting_value')
     def autocomplete_value(self, input: List[str]):
-        print(input)
         if input[-2] == 'input':
             return ['sentence', 'command']
+        elif input[-2] == 'scroll':
+            return ['smooth', 'instant']
+        elif input[-2] == 'map_on_survey':
+            return ['true', 'false']
         return []

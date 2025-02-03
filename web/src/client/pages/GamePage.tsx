@@ -36,6 +36,7 @@ export const GamePage: Component = () => {
   const [missedPongs, setMissedPongs] = createSignal(0)
   const [retryConnect, setRetryConnect] = createSignal(true)
   const [sessionId, setSessionId] = createSignal(crypto.randomUUID())
+  const [settings, setSettings] = createSignal<any>({})
 
   let chatDiv: HTMLDivElement
   function sendChatText(str: string) {
@@ -108,6 +109,9 @@ export const GamePage: Component = () => {
         sendChatText(message.data)
       } else if (message.type === 'pong') {
         setPingSent(false)
+      } else if (message.type === 'setting') {
+        const { setting, value } = message
+        setSettings((settings) => ({ ...settings, [setting]: value }))
       }
     }
     ws.onclose = () => {
@@ -220,7 +224,11 @@ export const GamePage: Component = () => {
         <div class='flex-1 h-1 md:h-auto'>
           <Terminal
             hasAutocomplete={true}
-            screen={{ text: text(), scrollOnChange: true }}
+            screen={{
+              text: text(),
+              scrollOnChange: true,
+              scrollType: settings()?.scroll,
+            }}
             value={input()}
             autocomplete={suggestion()}
             onSend={(cmd: string, mode: number) => {
