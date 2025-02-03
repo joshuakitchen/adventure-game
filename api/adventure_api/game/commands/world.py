@@ -64,6 +64,12 @@ class WorldCommands:
                 if 'on_survey' in Item.get_item_data(item_type):
                     output += Item.get_item_data(item_type)['on_survey'](c, item, cell) + '\n'
 
+        if cell._characters:
+            char_list = [x for x in cell._characters if x._id != c._id]
+            char_list_str = ', '.join(['@lgr@' + x.name + '@res@' for x in char_list])
+            is_or_are = 'is' if len(char_list) == 1 else 'are'
+            output += f'{char_list_str} {is_or_are} nearby.\n'
+
         output += '\n'
 
         output = textwrap.fill(output, 80) + '\n'

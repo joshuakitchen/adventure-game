@@ -192,6 +192,9 @@ class Character:
                 if 'on_defeat' in target.data:
                     print(target.data['on_defeat'], target, self, self._cell)
                     await target.data['on_defeat'](target, self, self._cell)
+                for c in self._cell.characters:
+                    if c._id != self._id:
+                        await c.send_message('game', '@red@{}@res@ has killed the @red@{}@res@.', self._name, target.name.lower())
                 self._target = None
                 self._action = None
             self._action_timer = 3
@@ -230,6 +233,9 @@ class Character:
 
     async def on_dead(self):
         await self.send_message('game', 'Oh dear, you have died!\n')
+        for c in self._cell.characters:
+            if c._id != self._id:
+                await c.send_message('game', '@red@{}@res@ has died.', self._name)
         self._inventory = []
         self._hp = self._attributes['constitution'][0]
         self._target = None
@@ -321,6 +327,10 @@ class Character:
             return
         self._target = target_id
         await self.set_action('attack')
+        if len(self._cell.characters) > 1:
+            for c in self._cell.characters:
+                if c._id != self._id:
+                    await c.send_message('game', '@red@{}@res@ has started attacking a @red@{}@res@.', self._name, self.target.name.lower())
 
     def add_item(self, item_id: str, qualifiers: Dict[str, Any]) -> bool:
         """"""
