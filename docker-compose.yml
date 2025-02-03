@@ -16,6 +16,8 @@ services:
       POSTGRES_DB: nymirith
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
   api:
     build: api
     ports:
@@ -39,3 +41,6 @@ services:
       WS_URL: ws://api:8081/play
       CLIENT_ID: ${CLIENT_ID}
       CLIENT_SECRET: ${CLIENT_SECRET}
+volumes:
+  pgdata:
+
