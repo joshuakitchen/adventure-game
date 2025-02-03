@@ -70,6 +70,17 @@ class BasicCommands:
         :command_category: System Commands"""
         pass
 
+    @command
+    async def set(self, setting: str, value: str):
+        """Sets a setting for the game.
+
+        :command_summary: Sets a setting for the game.
+        :command_category: System Commands
+        :command_param_type setting: setting
+        :command_param_type value: setting_value
+        """
+        pass
+
     @autocomplete('page')
     def autocomplete_page(self, input: List[str]):
         return []
@@ -78,3 +89,14 @@ class BasicCommands:
     def autocomplete_command(self, handler: CommandHandler, input: List[str]):
         """Autocomplete command functions"""
         return [c["func"].__name__ for c in handler.get_command_list()]
+    
+    @autocomplete('setting')
+    def autocomplete_setting(self, input: List[str]):
+        return ['input']
+    
+    @autocomplete('setting_value')
+    def autocomplete_value(self, input: List[str]):
+        print(input)
+        if input[-2] == 'input':
+            return ['sentence', 'command']
+        return []

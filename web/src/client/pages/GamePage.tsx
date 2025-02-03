@@ -169,7 +169,7 @@ export const GamePage: Component = () => {
           setAdminModal(false)
         }}
       />
-      <div class='mx-auto h-full flex flex-col md:flex-row text-gray-300'>
+      <div class='mx-auto h-screen flex flex-col md:flex-row text-gray-300 overflow-y-hidden'>
         <nav class='flex flex-row md:flex-col border-l border-zinc-800 bg-zinc-800'>
           <a class='p-4 transition-colors hover:bg-zinc-700' href='#'>
             <FontAwesomeIcon className='fa-fw' icon='comments' />

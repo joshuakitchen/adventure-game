@@ -5,6 +5,8 @@ import re
 from collections import OrderedDict
 from typing import Any, Callable, Iterable, List, Type, Union, TYPE_CHECKING
 
+from util import find_closest_match
+
 if TYPE_CHECKING:
     from ..character import Character
 
@@ -160,8 +162,13 @@ class CommandHandler:
         if input[0] in known_aliases:
             input = known_aliases[input[0]].split(' ') + input[1:]
         if input[0] not in command_list:
-            await self._character.send_message(
-                'game', '@red@Unable to find command@res@\n')
+            closest = find_closest_match(input[0], command_list.keys())
+            if closest[0]:
+                await self._character.send_message(
+                    'game', '@red@Unknown command, did you mean "@lbl@{}@red@"?@res@\n', closest[0])
+            else:
+                await self._character.send_message(
+                    'game', '@red@Unable to find command@res@\n')
             return
         try:
             handler, command_data = command_list[input[0]]
@@ -173,7 +180,10 @@ class CommandHandler:
             ureg = re.compile(
                 f'{command_data["func"].__qualname__}\\(\\) missing \\d+ required positional argument: \'.+\''
             )
-            if reg.match(str(e)) or ureg.match(str(e)):
+            mul_reg = re.compile(
+                f'{command_data["func"].__qualname__}\\(\\) missing \\d+ required positional arguments: .+'
+            )
+            if reg.match(str(e)) or ureg.match(str(e)) or mul_reg.match(str(e)):
                 await self._character.send_message('game', '@lre@Invalid command usage, type "@lbl@help {}@lre@" for information on this command. @res@\n', input[0])
             else:
                 raise

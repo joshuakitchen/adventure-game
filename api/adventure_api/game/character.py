@@ -27,6 +27,24 @@ INTRODUCTION_TEXT = '''{}
 
 Welcome to the world of Nymirith.
 
+Your story is your own, you can choose to be a hero, a villain, or something in,
+in-between. Become a legendary fighter, a king of the land, or a master
+fisherman. The choice is yours.
+
+The game has two input modes.
+- Command Mode: Command mode is rigid and requires you to type commands in a
+    specific format. This mode is powerful and allows discrete control over your
+    character, but prevents you from using sentences. Spelling mistakes will
+    be suggested but not input automatically.
+- Sentence Mode: Sentence mode is more relaxed and allows you to type in full
+    sentences to achieve your goal, these are converted to commands but offer
+    synonyms and more natural language. Spelling mistakes will be corrected and
+    input automatically with the closest match within reason, if this happens
+    the corrected word will be highlighted.
+
+The game is a set to "{}" mode, you can change this by typing
+"@lbl@set@res@ input sentence" or "@lbl@mode@res@ input command".
+
 Type "@lbl@begin@res@" followed by your character name to start.
 \n\n'''
 
@@ -279,6 +297,7 @@ class Character:
             self._command_handler.add_command_handler(ItemCommands())
         elif self._state == 'intro':
             self._command_handler.add_command_handler(IntroCommands())
+        self.save_character()
 
     async def start_attacking(self, target_id: str):
         """Begins attacking the target with the given target id."""
