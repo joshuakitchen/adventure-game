@@ -319,7 +319,6 @@ class CommandHandler:
             if getattr(v, '__command__', None) is not None
         ]
         fn = next(iter([f for f in fns if f['func'].__name__ == command]), None)
-        print(fn)
         return fn
 
     def get_command_list(self):

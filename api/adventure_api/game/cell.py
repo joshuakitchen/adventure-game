@@ -38,7 +38,9 @@ class Cell:
         self._z = z
         self._characters = []
         self._enemies = []
-        self._items = []
+        self._items = [
+            ['dead_rabbit', {}],
+        ]
         self._claimed_by = None
         self._spawn_tick = SPAWN_TICK
         self.load()

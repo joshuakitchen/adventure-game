@@ -1,6 +1,6 @@
 from starlette.authentication import AuthenticationBackend, AuthCredentials
 from fastapi.security.utils import get_authorization_scheme_param
-from model import get_user
+from model import get_auth_user
 import jwt
 import os
 import logging
@@ -26,7 +26,7 @@ class BearerTokenBackend(AuthenticationBackend):
             logging.exception(e)
             return None
         
-        user = get_user(user['email'])
+        user = get_auth_user(user['email'])
         if not user:
             return None
         

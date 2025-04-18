@@ -7,7 +7,12 @@ import {
 } from 'solid-js'
 import { createStore, SetStoreFunction } from 'solid-js/store'
 
-export type UserData = { id: string; email: string; is_admin: boolean }
+export type UserData = {
+  id: string
+  email?: string
+  is_admin?: boolean
+  is_guest: boolean
+}
 export type UserContextData = [UserData, SetStoreFunction<UserData>]
 
 const UserContext = createContext<UserContextData>()

@@ -1,6 +1,9 @@
 import textwrap
 import random
+from collections import defaultdict
 from typing import List, Optional, TYPE_CHECKING
+
+from util.text_util import get_noun_listings
 from .base import aliases, autocomplete, command, CommandHandler
 from ..enemy import Enemy
 from ..world import World
@@ -64,7 +67,7 @@ class WorldCommands:
                 if 'on_survey' in Item.get_item_data(item_type):
                     output += Item.get_item_data(item_type)['on_survey'](c, item, cell) + '\n'
 
-        if cell._characters:
+        if len(cell._characters) > 1:
             char_list = [x for x in cell._characters if x._id != c._id]
             char_list_str = ', '.join(['@lgr@' + x.name + '@res@' for x in char_list])
             is_or_are = 'is' if len(char_list) == 1 else 'are'
@@ -97,19 +100,21 @@ class WorldCommands:
         await c.send_message('game', output)
 
     @command
-    async def pickup(self, c: 'Character', item: str):
+    async def pickup(self, c: 'Character', *args):
         """Picks up an item from the local area.
 
         :command_summary: Picks up an item from the local area.
         :command_param_type item: item
         :command_category: Interaction"""
+        noun = args[-1]
+        item = noun
         i_idx = -1
         for idx, i in enumerate(c._cell.items):
-            if i['name'] == item:
+            if i['name'].lower() == item.lower():
                 i_idx = idx
                 break
         else:
-            await c.send_message('game', '@red@Item could not be found.@res@\n')
+            await c.send_message('game', 'You look around but there is no @yel@""@res@ in the area\n', ' '.join(args))
             return
         i_item = c._cell._items.pop(i_idx)
         c.add_item(i_item[0], i_item[1])
@@ -228,11 +233,35 @@ class WorldCommands:
     
     @autocomplete('item')
     def autocomplete_item(self, c: 'Character', *inputs: str):
-        """Autocompletes the item which can be picked up from the local area."""
-        return [
-            f'"{i["name"]}"' if " " in i['name'] else i['name']
-            for i in c._cell.items
-        ]
+        """Autocompletes the item which can be picked up from the local area.
+        
+        This will return the nouns of the items in the local area, if a noun
+        could match multiple items but the adjectives are different, the
+        adjectives will be included in the autocompletion."""
+        
+        list_items = get_noun_listings(c._cell.items, inputs[0][1:])
+        print(list_items)
+
+        nouns = defaultdict(set)
+        for i in c._cell.items:
+            noun = i['noun']
+            adjectives = tuple(sorted(i['adjectives'].values()))
+            nouns[noun].add(adjectives)
+        
+        completions = []
+        for noun, adj_sets in nouns.items():
+            if len(adj_sets) == 1:
+                completions.append(noun)
+            else:
+                for adjs in adj_sets:
+                    completion = ' '.join(adjs) + " " + noun if adjs else noun
+                    completions.append(f'"{completion}"')
+        return sorted(completions)
+
+        # return [
+        #     f'"{i["name"]}"'.lower() if " " in i['name'] else i['name'].lower()
+        #     for i in c._cell.items
+        # ]
     
     @autocomplete('look_target')
     def autocomplete_look_target(self, cell: 'Cell', *inputs: str):

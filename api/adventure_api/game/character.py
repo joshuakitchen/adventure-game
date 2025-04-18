@@ -295,6 +295,7 @@ class Character:
         if self._ws is None or self._ws.client_state.value != 1:
             return
         await self._ws.send_json(dict(type='setting', setting=setting, value=value))
+        self.save_character()
 
     def set_state(self, state: str):
         """Sets the state of this character.

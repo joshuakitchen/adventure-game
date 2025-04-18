@@ -115,7 +115,7 @@ def on_rabbit_survey(character: 'Character', entities: List[Enemy], cell: 'Cell'
     return random.choice(choices)
 
 async def on_rabbit_defeat(self: Enemy, character: 'Character', cell: 'Cell'):
-    cell.add_item(['rabbit_corpse', {}])
+    cell.add_item(['dead_rabbit', {}])
 
 rabbit_definition = {
     'id': 'rabbit',

@@ -57,7 +57,7 @@ def get_user(email):
             cur = conn.cursor()
             try:
                 cur.execute(
-                    'SELECT id, email, password, is_admin FROM users WHERE email = ?',
+                    'SELECT id, email, password, is_admin FROM users WHERE email = ? AND is_guest = FALSE',
                     [email])
                 return cur.fetchone()
             finally:
@@ -67,7 +67,7 @@ def get_user(email):
     elif driver == 'postgres':
         with conn.cursor() as curs:
             curs.execute(
-                'SELECT id, email, password, is_admin FROM users WHERE email = %s',
+                'SELECT id, email, password, is_admin FROM users WHERE email = %s AND is_guest = FALSE',
                 [email])
             return curs.fetchone()
 

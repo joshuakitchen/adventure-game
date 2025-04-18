@@ -5,8 +5,6 @@ import os
 import random
 from typing import List
 
-import Levenshtein
-
 _id_ord = random.randint(0, 0xffff)
 
 

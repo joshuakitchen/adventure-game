@@ -86,7 +86,13 @@ class BasicCommands:
         :command_param_type value: setting_value
         """
         if setting == 'input':
-            await c.send_message('game', 'Not yet implemented, using command.')
+            await c.set_setting('input', value)
+            if value == 'sentence':
+                await c.send_message('game', 'You are now in sentence input mode, you should now type in sentences to interact with the game.')
+            elif value == 'command':
+                await c.send_message('game', 'You are now in command input mode, you should now type in commands to interact with the game.')
+            else:
+                await c.send_message('game', 'Invalid setting.')
         elif setting == 'scroll':
             await c.set_setting('scroll', value)
             await c.send_message('game', 'Now scrolling using {}.', value)

@@ -44,7 +44,9 @@ class Item:
             description=Item.get_description(item),
             internal_name=item[0],
             qualifiers=item[1],
-            slots_taken=data['slots_taken'])
+            slots_taken=data['slots_taken'],
+            noun=data['noun'],
+            adjectives=data['adjectives'])
     
     @staticmethod
     def match_condition(item: Tuple[str, Dict[str, str]], condition: str) -> bool:
@@ -69,7 +71,6 @@ class Item:
                 if Item.match_condition(item, k):
                     await character.process_script(v)
                     return
-
     
     @staticmethod
     def get_sagewort_quality(*args, character: 'Character', **kwargs):

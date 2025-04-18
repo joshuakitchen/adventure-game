@@ -132,6 +132,25 @@ async function main() {
     }
   )
 
+  app.post(
+    '/guest',
+    bodyParser.json(),
+    async function _onGuest(req, res, next) {
+      try {
+        const data = req.body.guestId || undefined
+        const httpRes = await axios.post(`${API_URI}/guest`, data)
+
+        console.log(data)
+      } catch (err) {
+        const { response } = err
+        if (!response) {
+          return next(err)
+        }
+        res.status(response.status).json(response.data)
+      }
+    }
+  )
+
   app.get('/logout', function _onSignOut(req, res) {
     res.clearCookie('session')
     res.redirect('/login')

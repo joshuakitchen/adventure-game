@@ -10,6 +10,11 @@ services:
     environment:
       NGINX_SERVER_NAME: ${NGINX_SERVER_NAME}
       NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
   db:
     image: postgres:17.2-alpine
     environment:
@@ -18,12 +23,18 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   api:
     build: api
     ports:
       - "3001:8081"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       DB_DRIVER: postgres
       DB_HOST: db
@@ -32,10 +43,19 @@ services:
       DB_PASSWORD:  ${POSTGRES_PASSWORD}
       CLIENT_ID: ${CLIENT_ID}
       CLIENT_SECRET: ${CLIENT_SECRET}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
   web:
     build: web
     ports:
       - "3000:8080"
+    depends_on:
+      api:
+        condition: service_healthy
     environment:
       API_URL: http://api:8081
       WS_URL: ws://api:8081/play

@@ -3,6 +3,7 @@ import { createStore } from 'solid-js/store'
 import { useNavigate } from '@solidjs/router'
 import axios from 'axios'
 import { useUser } from '../user'
+import { Button } from '@components'
 
 const LoginPage: Component = () => {
   const navigate = useNavigate()
@@ -58,7 +59,7 @@ const LoginPage: Component = () => {
                   password: store.password,
                 })
                 .then((res) => {
-                  setUser(res.data)
+                  setUser({ ...res.data, is_guest: false })
                   navigate('/')
                 })
                 .catch((err) => {
@@ -80,6 +81,23 @@ const LoginPage: Component = () => {
             Register
           </button>
         </div>
+        <Button
+          onClick={() => {
+            const guestId = localStorage.getItem('guestId') || null
+            axios
+              .post('/guest', {
+                guestId,
+              })
+              .then((res) => {
+                console.log(res.data)
+              })
+              .catch((err) => {
+                console.log(err)
+              })
+          }}
+        >
+          Play as Guest
+        </Button>
       </div>
     </div>
   )

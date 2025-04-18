@@ -1,5 +1,8 @@
 from config import get_conn
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 def create_version_table():
     """Creates the version table if it doesn't exist"""
@@ -52,7 +55,7 @@ def create_user_table():
         with conn.cursor() as cur:
             cur.execute('''CREATE TABLE IF NOT EXISTS users (
                 id VARCHAR(36) NOT NULL PRIMARY KEY,
-                email VARCHAR(255)NOT NULL UNIQUE,
+                email VARCHAR(255) NOT NULL UNIQUE,
                 password TEXT NOT NULL,
                 date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -181,9 +184,22 @@ def migrate():
 
                 cur.execute("INSERT INTO db_version (id) VALUES (1)")
                 conn.commit()
-                cur.execute("SELECT id, timestamp FROM db_version ORDER BY id DESC LIMIT 1")
-                version = cur.fetchone()
-                print('new version', version)
+            elif version <= 1:
+                cur.execute('''ALTER TABLE users
+                            DROP CONSTRAINT IF EXISTS users_email_key,
+                            ADD COLUMN IF NOT EXISTS is_guest BOOLEAN DEFAULT FALSE,
+                            ALTER COLUMN email DROP NOT NULL,
+                            ALTER COLUMN password DROP NOT NULL''')
+
+                cur.execute("INSERT INTO db_version (id) VALUES (2)")
+                conn.commit()
+
+            old_version = version
+            cur.execute("SELECT id, timestamp FROM db_version ORDER BY id DESC LIMIT 1")
+            version = cur.fetchone()
+            version = version[0] if version else 0
+            if version != old_version:
+                logger.info('migrated from %s to %s', old_version, version)
 
 
 def setup_database():

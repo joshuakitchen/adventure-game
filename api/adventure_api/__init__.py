@@ -13,12 +13,13 @@ from pydantic import BaseModel
 from typing import Optional
 from config import get_conn
 from game import Character, World
-from model import check_password, get_user, register_user
+from model import check_password, get_auth_user, register_user
 from setup import setup_database
 from starlette.middleware.authentication import AuthenticationMiddleware
 from auth import BearerTokenBackend
 from api import user_router
 from game.data import load_data
+from game.sentence import SentenceHandler, SentenceParseError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -43,13 +44,18 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     return {'id': decoded_token['user_id'], 'email': decoded_token['email']}
 
 
+@app.get('/health')
+async def health_check():
+    return {"status": "healthy"}
+
+
 @app.post('/register')
 async def register(req: RegisterRequest):
     if not re.fullmatch(email_regex, req.email):
         raise HTTPException(400, 'Email is not a valid email address.')
     if len(req.password) < 8:
         raise HTTPException(400, 'Password must be above 8 characters.')
-    u = get_user(req.email)
+    u = get_auth_user(req.email)
     if u:
         raise HTTPException(403, 'That email is already taken')
     user_id = register_user(req.email, req.password)
@@ -77,7 +83,7 @@ async def register(req: RegisterRequest):
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     if form_data.client_id != CLIENT_ID and form_data.client_id != CLIENT_SECRET:
         raise HTTPException(status_code=400, detail='Invalid client')
-    user = get_user(form_data.username)
+    user = get_auth_user(form_data.username)
     if not user:
         raise HTTPException(
             status_code=400,
@@ -165,11 +171,23 @@ async def play(ws: WebSocket, session: str):
                     True)
                 await ws.send_json(dict(type='autocomplete', data=suggestion))
             elif data['type'] == 'game':
-                logger.info(
-                    'handling command [%s] for [%s]',
-                    data['data'],
-                    character._name)
-                await character.command_handler.handle_input(command)
+                if character._settings.get('input', 'command') == 'command':
+                    logger.info(
+                        'handling command [%s] for [%s]',
+                        data['data'],
+                        character._name)
+                    await character.command_handler.handle_input(command)
+                elif character._settings.get('input', 'command') == 'sentence':
+                    logger.info(
+                        'handling sentence [%s] for [%s]',
+                        data['data'],
+                        character._name)
+                    try:
+                        await SentenceHandler.parse_sentence(character, data['data'])
+                    except SentenceParseError as e:
+                        await ws.send_json(dict(type='game', data=str(e)))
+                else:
+                    logging.error('unknown input type [%s]', character._settings.get('input', 'command'))
             elif data['type'] == 'ping':
                 await ws.send_json(dict(type='pong', data=''))
     except WebSocketDisconnect:
@@ -213,6 +231,7 @@ thread = threading.Thread(target=lambda: asyncio.run(loop()))
 @app.on_event("startup")
 def begin_game_loop():
     load_data()
+    SentenceHandler.load_terms()
 
     app.include_router(user_router)
     app.add_middleware(AuthenticationMiddleware, backend=BearerTokenBackend())
