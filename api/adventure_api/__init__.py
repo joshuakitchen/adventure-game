@@ -120,22 +120,23 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 async def play(ws: WebSocket, session: str):
     await ws.accept()
     user = ws.user
-    if not user:
+    # Check if user is an authenticated user (not UnauthenticatedUser)
+    if not user or not hasattr(user, 'get'):
         await ws.send_json(dict(type='error', data='You must be logged in to play.'))
         await ws.close()
         return
-    logging.info('user [%s] connected', user['id'])
+    logging.info('user [%s] connected', user.get('id'))
     for loaded_character in World._characters:
-        if loaded_character._id == user['id']:
+        if loaded_character._id == user.get('id'):
             if loaded_character._session_id != session:
                 await loaded_character._ws.send_json(dict(type='error', data='You have logged in elsewhere, please refresh to reconnect here.', retry=False))
             await loaded_character._ws.close()
             break
     character: Optional[Character] = None
     try:
-        character = World.get_player_by_id(user['id'], True)
+        character = World.get_player_by_id(user.get('id'), True)
         if not character:
-            character = Character(user['id'], ws, session)
+            character = Character(user.get('id'), ws, session)
             if character.name:
                 await World.send_to_all('chat', '@lgr@{}@res@ has just logged in.\n', character.name)
             World.add_player(character)

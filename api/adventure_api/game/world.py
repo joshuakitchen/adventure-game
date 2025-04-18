@@ -24,7 +24,7 @@ class World:
         for cell in cls._loaded_cells:
             await cell.tick()
         for character in cls._awaiting_characters:
-            if (datetime.now() - character[1]).total_seconds() > 2:
+            if (datetime.now() - character[1]).total_seconds() > 300:
                 cls._awaiting_characters.remove(character)
                 if character[0]._cell:
                     cls.unload_cell(character[0]._x, character[0]._z, character[0])

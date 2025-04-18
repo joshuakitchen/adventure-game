@@ -83,16 +83,32 @@ const LoginPage: Component = () => {
         </div>
         <Button
           onClick={() => {
+            // Get existing guest credentials from localStorage or generate new ones
             const guestId = localStorage.getItem('guestId') || null
+            const guestKey = localStorage.getItem('guestKey') || null
+
             axios
               .post('/guest', {
                 guestId,
+                guestKey,
               })
               .then((res) => {
-                console.log(res.data)
+                // Save guest credentials to localStorage
+                localStorage.setItem('guestId', res.data.email)
+                localStorage.setItem('guestKey', guestKey || res.data.id) // Use existing key or ID as new key
+
+                // Update user state and navigate to home
+                setUser({ ...res.data, is_guest: true })
+                navigate('/')
               })
               .catch((err) => {
-                console.log(err)
+                const { response } = err
+                if (response) {
+                  setStore(
+                    'error',
+                    response.data.detail || 'Failed to login as guest'
+                  )
+                }
               })
           }}
         >

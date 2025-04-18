@@ -21,4 +21,7 @@ class IntroCommands:
             return
         character._name = name_str
         character.set_state('adventure')
+        character.move(0, 0)
+        
+        # Send welcome message
         await character.send_message('game', 'Welcome @lgr@{}@res@!\nUse "help" to list commands to get started.\n', name_str)

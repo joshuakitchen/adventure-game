@@ -137,10 +137,32 @@ async function main() {
     bodyParser.json(),
     async function _onGuest(req, res, next) {
       try {
-        const data = req.body.guestId || undefined
-        const httpRes = await axios.post(`${API_URI}/guest`, data)
+        // Send guestId and guestKey to the API
+        const httpRes = await axios.post(`${API_URI}/api/v1/guest`, {
+          guestId: req.body.guestId,
+          guestKey: req.body.guestKey,
+        })
 
-        console.log(data)
+        // Sign session token and set cookie
+        const signed = await jwt.sign(
+          JSON.stringify({
+            access_token: httpRes.data.token,
+            user_id: httpRes.data.user.id,
+            email: httpRes.data.user.email,
+            is_admin: httpRes.data.user.is_admin,
+            is_guest: httpRes.data.user.is_guest,
+          }),
+          COOKIE_SECRET
+        )
+
+        res.cookie('session', signed)
+        res.json({
+          id: httpRes.data.user.id,
+          email: httpRes.data.user.email,
+          is_admin: httpRes.data.user.is_admin,
+          is_guest: httpRes.data.user.is_guest,
+          name: httpRes.data.user.name,
+        })
       } catch (err) {
         const { response } = err
         if (!response) {

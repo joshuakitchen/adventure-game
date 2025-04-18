@@ -1,12 +1,14 @@
 import json
 import subprocess
+import jwt
+import os
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import uuid4
 from fastapi import APIRouter, Request, Header, HTTPException, Response
 from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel
-from model import get_users, get_user_by_id
+from model import get_users, get_user_by_id, get_guest_user
 from game import World
 from setup import get_conn
 
@@ -184,4 +186,36 @@ async def get_audit_route(request: Request):
     return {
         'data': audit,
         'total': len(audit)
+    }
+
+@user_router.post('/api/v1/guest')
+async def post_guest_route(request: Request):
+    """POST /api/v1/guest
+    
+    Create or authenticate a guest user.
+    """
+    data = await request.json()
+    
+    guest_id = None
+    guest_key = None
+    
+    if data:
+        guest_id = data.get('guestId')
+        guest_key = data.get('guestKey')
+    
+    user = get_guest_user(guest_id, guest_key)
+    
+    # Generate JWT token
+    payload = {
+        'user_id': user['id'],
+        'email': user['email'],
+        'is_admin': user['is_admin'],
+        'exp': datetime.utcnow() + timedelta(days=14)
+    }
+    
+    token = jwt.encode(payload, os.environ['CLIENT_SECRET'], algorithm='HS256')
+    
+    return {
+        'token': token,
+        'user': user
     }

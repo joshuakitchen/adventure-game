@@ -93,8 +93,21 @@ export const GamePage: Component = () => {
         ws.close()
         setWs(null)
 
+        // Only check retry flag for normal errors
         if (typeof message.retry !== 'undefined') {
           setRetryConnect(message.retry)
+        }
+      } else if (message.type == 'critical_error') {
+        setText((text) => text + '\x1b[31m' + message.data + '\x1b[0m\n')
+        ws.close()
+        setWs(null)
+
+        // Critical errors never retry
+        setRetryConnect(false)
+
+        // Redirect to login if it's an authentication error
+        if (message.data === 'You must be logged in to play.') {
+          navigate('/login')
         }
       } else if (message.type == 'game') {
         setText((text) => text + message.data + '\n')
